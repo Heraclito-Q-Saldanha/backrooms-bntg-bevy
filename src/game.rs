@@ -5,11 +5,11 @@ use bevy::prelude::*;
 pub struct GamePlugin;
 
 impl Plugin for GamePlugin {
-    fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(GameState::InGame), scene.spawn());
-    }
+	fn build(&self, app: &mut App) {
+		app.add_systems(OnEnter(GameState::InGame), spawn);
+	}
 }
 
-fn scene() -> impl SceneList {
-    bsn_list!(Camera3d)
+fn spawn(mut commands: Commands, asset_server: Res<AssetServer>) {
+	commands.spawn((DespawnOnExit::<GameState>(GameState::Menu), WorldAssetRoot(asset_server.load("game.glb#Scene0"))));
 }
