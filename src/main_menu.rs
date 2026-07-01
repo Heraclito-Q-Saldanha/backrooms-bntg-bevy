@@ -25,40 +25,52 @@ fn scene() -> impl Scene {
         }
         Children [
             (
-                button("Play", tailwind::GREEN_800.into())
-                on(|_: On<Pointer<Press>>, mut state: ResMut<NextState<GameState>>| {
-                    state.set(GameState::InGame);
-                })
-                on(|_: On<Pointer<Enter>>| println!("Enter Play"))
+                button("Play", tailwind::GREEN_800.into(), tailwind::GREEN_700.into())
+                on(on_button_play_system)
             ),
             (
-                button("Exit", tailwind::GRAY_800.into())
-                on(|_: On<Pointer<Press>>, mut exit: MessageWriter<AppExit>| {
-                    exit.write(AppExit::Success);
-                })
-                on(|_: On<Pointer<Enter>>| println!("Enter Exit"))
+                button("Exit", tailwind::GREEN_800.into(), tailwind::GREEN_700.into())
+                on(on_button_exit_system)
             ),
         ]
     }
 }
 
-fn button(label: &str, bg_color: Color) -> impl Scene {
+fn button(label: &str, normal: Color, hover: Color) -> impl Scene {
     bsn! {
         Button
         Node {
-            width: px(150),
-            height: px(65),
-            border: px(5),
-            border_radius: BorderRadius::all(px(10)),
+            width: px(250),
+            height: px(50),
+            border: px(2),
+            border_radius: BorderRadius::all(px(5)),
             justify_content: JustifyContent::Center,
             align_items: AlignItems::Center,
         }
         BorderColor::from(Color::BLACK)
-        BackgroundColor(bg_color)
+        BackgroundColor(normal)
         Children [(
             Text(label)
-            TextColor(Color::srgb(0.9, 0.9, 0.9))
+            TextColor(tailwind::CYAN_50)
             TextShadow
         )]
+        on(move |trigger: On<Pointer<Enter>>, mut query: Query<&mut BackgroundColor>|{
+            if let Ok(mut bg) = query.get_mut(trigger.entity) {
+                bg.0 = hover;
+            }
+        })
+        on(move |trigger: On<Pointer<Out>>, mut query: Query<&mut BackgroundColor>|{
+            if let Ok(mut bg) = query.get_mut(trigger.entity) {
+                bg.0 = normal;
+            }
+        })
     }
+}
+
+fn on_button_play_system(_: On<Pointer<Press>>, mut state: ResMut<NextState<GameState>>) {
+    state.set(GameState::InGame);
+}
+
+fn on_button_exit_system(_: On<Pointer<Press>>, mut exit: MessageWriter<AppExit>) {
+    exit.write(AppExit::Success);
 }
