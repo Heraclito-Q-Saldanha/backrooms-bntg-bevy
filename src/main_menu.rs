@@ -11,12 +11,10 @@ impl Plugin for MainMenuPlugin {
     }
 }
 
-fn scene() -> impl SceneList {
-    bsn_list![Camera2d, ui()]
-}
-
-fn ui() -> impl Scene {
+fn scene() -> impl Scene {
     bsn! {
+        DespawnOnExit::<GameState>(GameState::Menu)
+        Camera2d
         Node {
             width: percent(100),
             height: percent(100),
@@ -28,13 +26,17 @@ fn ui() -> impl Scene {
         Children [
             (
                 button("Play", tailwind::GREEN_800.into())
-                on(|_event: On<Pointer<Press>>| println!("Play"))
-                on(|_event: On<Pointer<Enter>>| println!("Enter Play"))
+                on(|_: On<Pointer<Press>>, mut state: ResMut<NextState<GameState>>| {
+                    state.set(GameState::InGame);
+                })
+                on(|_: On<Pointer<Enter>>| println!("Enter Play"))
             ),
             (
                 button("Exit", tailwind::GRAY_800.into())
-                on(|_event: On<Pointer<Press>>| println!("Exit"))
-                on(|_event: On<Pointer<Enter>>| println!("Enter Exit"))
+                on(|_: On<Pointer<Press>>, mut exit: MessageWriter<AppExit>| {
+                    exit.write(AppExit::Success);
+                })
+                on(|_: On<Pointer<Enter>>| println!("Enter Exit"))
             ),
         ]
     }

@@ -1,3 +1,4 @@
+mod game;
 mod main_menu;
 
 use bevy::prelude::*;
@@ -14,6 +15,7 @@ fn main() {
 
     app.add_plugins(DefaultPlugins);
     app.add_plugins(main_menu::MainMenuPlugin);
+    app.add_plugins(game::GamePlugin);
 
     #[cfg(debug_assertions)]
     {
