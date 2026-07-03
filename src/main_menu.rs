@@ -18,10 +18,10 @@ fn scene() -> impl Scene {
 		Node {
 			width: percent(100),
 			height: percent(100),
+			row_gap: px(10),
 			align_items: AlignItems::Center,
 			justify_content: JustifyContent::Center,
 			flex_direction: FlexDirection::Column,
-			row_gap: px(10),
 		}
 		Children [
 			(

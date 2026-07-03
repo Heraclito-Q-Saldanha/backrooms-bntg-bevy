@@ -17,14 +17,16 @@ fn main() {
 	app.add_plugins(DefaultPlugins);
 	app.add_plugins(main_menu::MainMenuPlugin);
 	app.add_plugins(game::GamePlugin);
-	app.add_plugins(bevy_skein::SkeinPlugin::default());
 	app.add_plugins(player::PlayerPlugin);
+	app.add_plugins(bevy_skein::SkeinPlugin::default());
+	app.add_plugins(avian3d::PhysicsPlugins::default());
 
 	#[cfg(debug_assertions)]
 	{
 		use bevy_inspector_egui::*;
 		app.add_plugins(bevy_egui::EguiPlugin::default());
 		app.add_plugins(quick::WorldInspectorPlugin::new());
+		app.add_plugins(avian3d::debug_render::PhysicsDebugPlugin::default());
 	}
 
 	app.init_state::<GameState>();

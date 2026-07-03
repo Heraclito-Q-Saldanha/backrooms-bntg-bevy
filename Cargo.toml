@@ -7,3 +7,17 @@ edition = "2024"
 bevy = "0.19.0"
 bevy-inspector-egui = "0.37.0"
 bevy_skein = "0.6.0"
+avian3d = { version = "0.7.0", default-features = false, features = [
+    "3d",
+    "f64",
+    "default-collider",
+    "parry-f64",
+    "xpbd_joints",
+    "collider-from-mesh",
+    "bevy_scene",
+    "bevy_picking",
+    "debug-plugin",
+    "enhanced-determinism",
+    "parallel",
+    "serialize",
+] }
