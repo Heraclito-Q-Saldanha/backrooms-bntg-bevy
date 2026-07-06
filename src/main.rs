@@ -1,6 +1,8 @@
+mod create_lobby;
 mod game;
 mod main_menu;
 mod player;
+mod search_lobby;
 mod steam;
 
 use bevy::prelude::*;
@@ -9,6 +11,8 @@ use bevy::prelude::*;
 pub enum GameState {
 	#[default]
 	Menu,
+	SearchLobby,
+	CreatingLobby,
 	InGame,
 }
 
@@ -18,6 +22,8 @@ fn main() {
 	app.add_plugins(steam::SteamPlugin);
 	app.add_plugins(DefaultPlugins);
 	app.add_plugins(main_menu::MainMenuPlugin);
+	app.add_plugins(search_lobby::SearchLobbyPlugin);
+	app.add_plugins(create_lobby::CreateLobbyPlugin);
 	app.add_plugins(game::GamePlugin);
 	app.add_plugins(player::PlayerPlugin);
 	app.add_plugins(bevy_skein::SkeinPlugin::default());
@@ -25,10 +31,12 @@ fn main() {
 
 	#[cfg(debug_assertions)]
 	{
+		use bevy::dev_tools;
 		use bevy_inspector_egui::*;
 		app.add_plugins(bevy_egui::EguiPlugin::default());
 		app.add_plugins(quick::WorldInspectorPlugin::new());
 		app.add_plugins(avian3d::debug_render::PhysicsDebugPlugin::default());
+		app.add_plugins(dev_tools::infinite_grid::InfiniteGridPlugin);
 	}
 
 	app.init_state::<GameState>();

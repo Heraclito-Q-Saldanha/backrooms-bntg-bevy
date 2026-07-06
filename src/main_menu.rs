@@ -25,8 +25,12 @@ fn scene() -> impl Scene {
 		}
 		Children [
 			(
-				button("Play", tailwind::GREEN_800.into(), tailwind::GREEN_700.into())
-				on(on_button_play_system)
+				button("Create Lobby", tailwind::GREEN_800.into(), tailwind::GREEN_700.into())
+				on(on_button_create_lobby_system)
+			),
+			(
+				button("Join Lobby", tailwind::GREEN_800.into(), tailwind::GREEN_700.into())
+				on(on_button_join_lobby_system)
 			),
 			(
 				button("Exit", tailwind::GREEN_800.into(), tailwind::GREEN_700.into())
@@ -67,8 +71,12 @@ fn button(label: &str, normal: Color, hover: Color) -> impl Scene {
 	}
 }
 
-fn on_button_play_system(_: On<Pointer<Press>>, mut state: ResMut<NextState<GameState>>) {
-	state.set(GameState::InGame);
+fn on_button_create_lobby_system(_: On<Pointer<Press>>, mut state: ResMut<NextState<GameState>>) {
+	state.set(GameState::CreatingLobby);
+}
+
+fn on_button_join_lobby_system(_: On<Pointer<Press>>, mut state: ResMut<NextState<GameState>>) {
+	state.set(GameState::SearchLobby);
 }
 
 fn on_button_exit_system(_: On<Pointer<Press>>, mut exit: MessageWriter<AppExit>) {
