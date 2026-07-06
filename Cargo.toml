@@ -21,3 +21,5 @@ avian3d = { version = "0.7.0", default-features = false, features = [
     "parallel",
     "serialize",
 ] }
+steamworks = "0.13.1"
+crossbeam = "0.8.4"

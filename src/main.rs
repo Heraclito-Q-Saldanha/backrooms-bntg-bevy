@@ -1,6 +1,7 @@
 mod game;
 mod main_menu;
 mod player;
+mod steam;
 
 use bevy::prelude::*;
 
@@ -14,6 +15,7 @@ pub enum GameState {
 fn main() {
 	let mut app = App::new();
 
+	app.add_plugins(steam::SteamPlugin);
 	app.add_plugins(DefaultPlugins);
 	app.add_plugins(main_menu::MainMenuPlugin);
 	app.add_plugins(game::GamePlugin);

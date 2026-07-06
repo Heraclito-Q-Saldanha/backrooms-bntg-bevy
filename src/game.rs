@@ -11,5 +11,5 @@ impl Plugin for GamePlugin {
 }
 
 fn spawn(mut commands: Commands, asset_server: Res<AssetServer>) {
-	commands.spawn((DespawnOnExit::<GameState>(GameState::Menu), WorldAssetRoot(asset_server.load("game.glb#Scene0"))));
+	commands.spawn((DespawnOnExit(GameState::Menu), WorldAssetRoot(asset_server.load("game.glb#Scene0"))));
 }
