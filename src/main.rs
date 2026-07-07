@@ -4,6 +4,7 @@ mod main_menu;
 mod player;
 mod search_lobby;
 mod steam;
+mod ui;
 
 use bevy::prelude::*;
 
@@ -20,7 +21,10 @@ fn main() {
 	let mut app = App::new();
 
 	app.add_plugins(steam::SteamPlugin);
-	app.add_plugins(DefaultPlugins);
+	app.add_plugins(DefaultPlugins.set(bevy::log::LogPlugin {
+		level: bevy::log::Level::INFO,
+		..Default::default()
+	}));
 	app.add_plugins(main_menu::MainMenuPlugin);
 	app.add_plugins(search_lobby::SearchLobbyPlugin);
 	app.add_plugins(create_lobby::CreateLobbyPlugin);

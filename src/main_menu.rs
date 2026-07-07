@@ -23,51 +23,21 @@ fn scene() -> impl Scene {
 			justify_content: JustifyContent::Center,
 			flex_direction: FlexDirection::Column,
 		}
+		BackgroundColor(tailwind::ZINC_950)
 		Children [
 			(
-				button("Create Lobby", tailwind::GREEN_800.into(), tailwind::GREEN_700.into())
+				ui::button("Create Lobby", tailwind::EMERALD_600.into(), tailwind::EMERALD_700.into())
 				on(on_button_create_lobby_system)
 			),
 			(
-				button("Join Lobby", tailwind::GREEN_800.into(), tailwind::GREEN_700.into())
+				ui::button("Join Lobby", tailwind::EMERALD_600.into(), tailwind::EMERALD_700.into())
 				on(on_button_join_lobby_system)
 			),
 			(
-				button("Exit", tailwind::GREEN_800.into(), tailwind::GREEN_700.into())
+				ui::button("Exit", tailwind::EMERALD_600.into(), tailwind::EMERALD_700.into())
 				on(on_button_exit_system)
 			),
 		]
-	}
-}
-
-fn button(label: &str, normal: Color, hover: Color) -> impl Scene {
-	bsn! {
-		Button
-		Node {
-			width: px(250),
-			height: px(50),
-			border: px(2),
-			border_radius: BorderRadius::all(px(5)),
-			justify_content: JustifyContent::Center,
-			align_items: AlignItems::Center,
-		}
-		BorderColor::from(Color::BLACK)
-		BackgroundColor(normal)
-		Children [(
-			Text(label)
-			TextColor(tailwind::CYAN_50)
-			TextShadow
-		)]
-		on(move |trigger: On<Pointer<Enter>>, mut query: Query<&mut BackgroundColor>|{
-			if let Ok(mut bg) = query.get_mut(trigger.entity) {
-				bg.0 = hover;
-			}
-		})
-		on(move |trigger: On<Pointer<Leave>>, mut query: Query<&mut BackgroundColor>|{
-			if let Ok(mut bg) = query.get_mut(trigger.entity) {
-				bg.0 = normal;
-			}
-		})
 	}
 }
 
