@@ -63,7 +63,7 @@ fn button(label: &str, normal: Color, hover: Color) -> impl Scene {
 				bg.0 = hover;
 			}
 		})
-		on(move |trigger: On<Pointer<Out>>, mut query: Query<&mut BackgroundColor>|{
+		on(move |trigger: On<Pointer<Leave>>, mut query: Query<&mut BackgroundColor>|{
 			if let Ok(mut bg) = query.get_mut(trigger.entity) {
 				bg.0 = normal;
 			}
