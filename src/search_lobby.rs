@@ -24,6 +24,8 @@ fn request_lobby_list(steam: Res<steam::SteamClient>) {
 fn on_lobby_list_updated(triger: On<steam::LobbyListUpdated>, query: Single<Entity, With<LobbyList>>, steam: Res<steam::SteamClient>, mut commands: Commands) {
 	info!("Lobby list updated");
 
+	commands.entity(*query).despawn_children();
+
 	for lobby_id in &triger.0 {
 		let Some(name) = steam.get_lobby_data(*lobby_id, "name") else {
 			continue;
@@ -53,6 +55,7 @@ fn scene() -> impl Scene {
 				Node {
 					width: percent(100),
 					height: px(100),
+					flex_direction: FlexDirection::Row,
 					justify_content: JustifyContent::SpaceBetween
 				}
 				Children [
@@ -77,24 +80,52 @@ fn scene() -> impl Scene {
 						on(on_button_back_system)
 					),
 					(
-						Button
 						Node {
-							width: px(100),
-							height: px(50),
-							border: px(2),
-							border_radius: BorderRadius::all(px(5)),
-							justify_content: JustifyContent::Center,
-							align_items: AlignItems::Center,
+							column_gap: px(16),
+							flex_direction: FlexDirection::Row,
 						}
-						BorderColor::from(tailwind::ZINC_100)
-						BackgroundColor(tailwind::EMERALD_600)
-						Children [(
-							Text("Enter")
-							TextColor(tailwind::ZINC_100)
-						)]
-						ui::change_bg_on_pointer::<Enter>(tailwind::EMERALD_700.into())
-						ui::change_bg_on_pointer::<Leave>(tailwind::EMERALD_600.into())
-						on(on_button_back_system)
+						Children [
+							(
+								Button
+								Node {
+									width: px(100),
+									height: px(50),
+									border: px(2),
+									border_radius: BorderRadius::all(px(5)),
+									justify_content: JustifyContent::Center,
+									align_items: AlignItems::Center,
+								}
+								BorderColor::from(tailwind::ZINC_100)
+								BackgroundColor(tailwind::EMERALD_600)
+								Children [(
+									Text("Enter")
+									TextColor(tailwind::ZINC_100)
+								)]
+								ui::change_bg_on_pointer::<Enter>(tailwind::EMERALD_700.into())
+								ui::change_bg_on_pointer::<Leave>(tailwind::EMERALD_600.into())
+								on(on_button_back_system)
+							),
+							(
+								Button
+								Node {
+									width: px(100),
+									height: px(50),
+									border: px(2),
+									border_radius: BorderRadius::all(px(5)),
+									justify_content: JustifyContent::Center,
+									align_items: AlignItems::Center,
+								}
+								BorderColor::from(tailwind::ZINC_100)
+								BackgroundColor(tailwind::EMERALD_600)
+								Children [(
+									Text("Refresh")
+									TextColor(tailwind::ZINC_100)
+								)]
+								ui::change_bg_on_pointer::<Enter>(tailwind::EMERALD_700.into())
+								ui::change_bg_on_pointer::<Leave>(tailwind::EMERALD_600.into())
+								on(on_button_refresh_system)
+							)
+						]
 					)
 				]
 			),
@@ -138,6 +169,10 @@ fn lobby_entry_component(label: &str) -> impl Scene {
 		ui::change_bg_on_pointer::<Enter>(tailwind::EMERALD_700.into())
 		ui::change_bg_on_pointer::<Leave>(tailwind::EMERALD_600.into())
 	}
+}
+
+fn on_button_refresh_system(_: On<Pointer<Click>>, steam: Res<steam::SteamClient>) {
+	request_lobby_list(steam);
 }
 
 fn on_button_back_system(_: On<Pointer<Press>>, mut state: ResMut<NextState<GameState>>) {

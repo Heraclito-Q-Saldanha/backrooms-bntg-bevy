@@ -76,8 +76,10 @@ fn on_create_button_click(_: On<Pointer<Click>>, steam: Res<steam::SteamClient>)
 }
 
 fn on_lobby_created(event: On<steam::LobbyCreated>, mut state: ResMut<NextState<GameState>>, steam: Res<steam::SteamClient>, input: Single<&mut text::EditableText, With<InputName>>) {
-	info!(r#"Lobby "{}" created"#, event.0.raw());
+	let lobby_id = event.0;
 	let name = &input.value().to_string();
-	steam.set_lobby_data(event.0, "name", name);
+
+	info!(r#"Lobby "{}" created"#, lobby_id.raw());
+	steam.set_lobby_data(lobby_id, "name", name);
 	state.set(GameState::InGame);
 }
