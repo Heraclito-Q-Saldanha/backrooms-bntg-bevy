@@ -2,11 +2,15 @@ use crate::*;
 
 use bevy::color::palettes::*;
 use bevy::prelude::*;
+use bevy::text;
 
 pub struct SearchLobbyPlugin;
 
 #[derive(Component, Debug, Clone, Copy, Default)]
 struct LobbyList;
+
+#[derive(Component, Debug, Clone, Copy, Default)]
+struct InputLobby;
 
 impl Plugin for SearchLobbyPlugin {
 	fn build(&self, app: &mut App) {
@@ -30,7 +34,7 @@ fn on_lobby_list_updated(triger: On<steam::LobbyListUpdated>, query: Single<Enti
 		let Some(name) = steam.get_lobby_data(*lobby_id, "name") else {
 			continue;
 		};
-		let id = commands.spawn_scene(lobby_entry_component(&name)).id();
+		let id = commands.spawn_scene(lobby_entry_component(&name, *lobby_id)).id();
 		commands.entity(*query).add_child(id);
 	}
 }
@@ -56,7 +60,8 @@ fn scene() -> impl Scene {
 					width: percent(100),
 					height: px(100),
 					flex_direction: FlexDirection::Row,
-					justify_content: JustifyContent::SpaceBetween
+					justify_content: JustifyContent::SpaceBetween,
+					align_items: AlignItems::Center
 				}
 				Children [
 					(
@@ -83,8 +88,25 @@ fn scene() -> impl Scene {
 						Node {
 							column_gap: px(16),
 							flex_direction: FlexDirection::Row,
+							align_items: AlignItems::Center
 						}
 						Children [
+							(
+								InputLobby
+								text::EditableText {
+									allow_newlines: false,
+								}
+								text::TextCursorStyle
+								Node {
+									width: px(150),
+									height: px(40),
+									border: px(2),
+									border_radius: BorderRadius::all(px(5)),
+									justify_content: JustifyContent::Center,
+									align_items: AlignItems::Center,
+								}
+								BorderColor::from(tailwind::ZINC_100)
+							),
 							(
 								Button
 								Node {
@@ -103,7 +125,6 @@ fn scene() -> impl Scene {
 								)]
 								ui::change_bg_on_pointer::<Enter>(tailwind::EMERALD_700.into())
 								ui::change_bg_on_pointer::<Leave>(tailwind::EMERALD_600.into())
-								on(on_button_back_system)
 							),
 							(
 								Button
@@ -149,7 +170,7 @@ fn scene() -> impl Scene {
 	}
 }
 
-fn lobby_entry_component(label: &str) -> impl Scene {
+fn lobby_entry_component(label: &str, lobby_id: steam::LobbyId) -> impl Scene {
 	bsn! {
 		Button
 		Node {
@@ -168,6 +189,10 @@ fn lobby_entry_component(label: &str) -> impl Scene {
 		)]
 		ui::change_bg_on_pointer::<Enter>(tailwind::EMERALD_700.into())
 		ui::change_bg_on_pointer::<Leave>(tailwind::EMERALD_600.into())
+		on(move |_: On<Pointer<Click>>, mut query: Single<&mut text::EditableText, With<InputLobby>>| {
+			let text = lobby_id.raw().to_string();
+			query.editor_mut().set_text(&text);
+		})
 	}
 }
 
