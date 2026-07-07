@@ -26,15 +26,63 @@ fn scene() -> impl Scene {
 		BackgroundColor(tailwind::ZINC_950)
 		Children [
 			(
-				ui::button("Create Lobby", tailwind::EMERALD_600.into(), tailwind::EMERALD_700.into())
+				Button
+				Node {
+					width: px(250),
+					height: px(50),
+					border: px(2),
+					border_radius: BorderRadius::all(px(5)),
+					justify_content: JustifyContent::Center,
+					align_items: AlignItems::Center,
+				}
+				BorderColor::from(tailwind::ZINC_100)
+				BackgroundColor(tailwind::EMERALD_600)
+				Children [(
+					Text("Create Lobby")
+					TextColor(tailwind::ZINC_100)
+				)]
+				ui::change_bg_on_pointer::<Enter>(tailwind::EMERALD_700.into())
+				ui::change_bg_on_pointer::<Leave>(tailwind::EMERALD_600.into())
 				on(on_button_create_lobby_system)
 			),
 			(
-				ui::button("Join Lobby", tailwind::EMERALD_600.into(), tailwind::EMERALD_700.into())
+				Button
+				Node {
+					width: px(250),
+					height: px(50),
+					border: px(2),
+					border_radius: BorderRadius::all(px(5)),
+					justify_content: JustifyContent::Center,
+					align_items: AlignItems::Center,
+				}
+				BorderColor::from(tailwind::ZINC_100)
+				BackgroundColor(tailwind::EMERALD_600)
+				Children [(
+					Text("Join Lobby")
+					TextColor(tailwind::ZINC_100)
+				)]
+				ui::change_bg_on_pointer::<Enter>(tailwind::EMERALD_700.into())
+				ui::change_bg_on_pointer::<Leave>(tailwind::EMERALD_600.into())
 				on(on_button_join_lobby_system)
 			),
 			(
-				ui::button("Exit", tailwind::EMERALD_600.into(), tailwind::EMERALD_700.into())
+				Button
+				Node {
+					width: px(250),
+					height: px(50),
+					border: px(2),
+					border_radius: BorderRadius::all(px(5)),
+					justify_content: JustifyContent::Center,
+					align_items: AlignItems::Center,
+				}
+				BorderColor::from(tailwind::ZINC_100)
+				BackgroundColor(tailwind::EMERALD_600)
+				Children [(
+					Text("Exit")
+					TextColor(tailwind::ZINC_100)
+				)]
+				ui::change_bg_on_pointer::<Enter>(tailwind::EMERALD_700.into())
+				ui::change_bg_on_pointer::<Leave>(tailwind::EMERALD_600.into())
 				on(on_button_exit_system)
 			),
 		]

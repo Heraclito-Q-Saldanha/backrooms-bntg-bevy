@@ -126,4 +126,12 @@ impl SteamClient {
 		let networking_messages = self.client.networking_messages();
 		networking_messages.receive_messages_on_channel(channel, batch_size)
 	}
+	pub fn set_lobby_data(&self, lobby_id: LobbyId, key: &str, value: &str) -> bool {
+		let matchmaking = self.client.matchmaking();
+		matchmaking.set_lobby_data(lobby_id, key, value)
+	}
+	pub fn get_lobby_data(&self, lobby_id: LobbyId, key: &str) -> Option<String> {
+		let matchmaking = self.client.matchmaking();
+		matchmaking.lobby_data(lobby_id, key)
+	}
 }

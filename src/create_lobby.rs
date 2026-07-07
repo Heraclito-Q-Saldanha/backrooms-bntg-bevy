@@ -43,7 +43,23 @@ fn scene() -> impl Scene {
 				text::TextCursorStyle
 			),
 			(
-				ui::button("Create", tailwind::EMERALD_600.into(), tailwind::EMERALD_700.into())
+				Button
+				Node {
+					width: px(250),
+					height: px(50),
+					border: px(2),
+					border_radius: BorderRadius::all(px(5)),
+					justify_content: JustifyContent::Center,
+					align_items: AlignItems::Center,
+				}
+				BorderColor::from(tailwind::ZINC_100)
+				BackgroundColor(tailwind::EMERALD_600)
+				Children [(
+					Text("Create")
+					TextColor(tailwind::ZINC_100)
+				)]
+				ui::change_bg_on_pointer::<Enter>(tailwind::EMERALD_700.into())
+				ui::change_bg_on_pointer::<Leave>(tailwind::EMERALD_600.into())
 				on(on_create_button_click)
 			)
 		]
