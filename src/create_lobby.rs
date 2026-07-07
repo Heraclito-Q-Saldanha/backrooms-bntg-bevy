@@ -6,6 +6,9 @@ use bevy::text;
 
 pub struct CreateLobbyPlugin;
 
+#[derive(Debug, Clone, Copy, Default, Component)]
+struct InputName;
+
 impl Plugin for CreateLobbyPlugin {
 	fn build(&self, app: &mut App) {
 		app.add_systems(OnEnter(GameState::CreatingLobby), scene.spawn());
@@ -40,6 +43,7 @@ fn scene() -> impl Scene {
 				text::EditableText {
 					allow_newlines: false,
 				}
+				InputName
 				text::TextCursorStyle
 			),
 			(
@@ -71,7 +75,9 @@ fn on_create_button_click(_: On<Pointer<Click>>, steam: Res<steam::SteamClient>)
 	steam.create_lobby(steamworks::LobbyType::Public, 10);
 }
 
-fn on_lobby_created(event: On<steam::LobbyCreated>, mut state: ResMut<NextState<GameState>>) {
+fn on_lobby_created(event: On<steam::LobbyCreated>, mut state: ResMut<NextState<GameState>>, steam: Res<steam::SteamClient>, input: Single<&mut text::EditableText, With<InputName>>) {
 	info!(r#"Lobby "{}" created"#, event.0.raw());
+	let name = &input.value().to_string();
+	steam.set_lobby_data(event.0, "name", name);
 	state.set(GameState::InGame);
 }
