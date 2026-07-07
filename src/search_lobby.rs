@@ -17,17 +17,12 @@ impl Plugin for SearchLobbyPlugin {
 		app.add_systems(OnEnter(GameState::SearchLobby), scene.spawn());
 		app.add_systems(OnEnter(GameState::SearchLobby), request_lobby_list);
 		app.add_observer(on_lobby_list_updated);
+		app.add_observer(on_lobby_joined);
 	}
-}
-
-fn request_lobby_list(steam: Res<steam::SteamClient>) {
-	info!("Requesting lobby list");
-	steam.request_lobby_list();
 }
 
 fn on_lobby_list_updated(triger: On<steam::LobbyListUpdated>, query: Single<Entity, With<LobbyList>>, steam: Res<steam::SteamClient>, mut commands: Commands) {
 	info!("Lobby list updated");
-
 	commands.entity(*query).despawn_children();
 
 	for lobby_id in &triger.0 {
@@ -37,6 +32,18 @@ fn on_lobby_list_updated(triger: On<steam::LobbyListUpdated>, query: Single<Enti
 		let id = commands.spawn_scene(lobby_entry_component(&name, *lobby_id)).id();
 		commands.entity(*query).add_child(id);
 	}
+}
+
+fn on_lobby_joined(event: On<steam::LobbyJoined>, mut state: ResMut<NextState<GameState>>) {
+	let lobby_id = event.0;
+	info!(r#"Lobby "{}" joined"#, lobby_id.raw());
+
+	state.set(GameState::InGame);
+}
+
+fn request_lobby_list(steam: Res<steam::SteamClient>) {
+	info!("Requesting lobby list");
+	steam.request_lobby_list();
 }
 
 fn scene() -> impl Scene {
@@ -99,7 +106,7 @@ fn scene() -> impl Scene {
 								text::TextCursorStyle
 								Node {
 									width: px(150),
-									height: px(40),
+									height: px(50),
 									border: px(2),
 									border_radius: BorderRadius::all(px(5)),
 									justify_content: JustifyContent::Center,
@@ -125,6 +132,7 @@ fn scene() -> impl Scene {
 								)]
 								ui::change_bg_on_pointer::<Enter>(tailwind::EMERALD_700.into())
 								ui::change_bg_on_pointer::<Leave>(tailwind::EMERALD_600.into())
+								on(on_button_enter_system)
 							),
 							(
 								Button
@@ -198,6 +206,15 @@ fn lobby_entry_component(label: &str, lobby_id: steam::LobbyId) -> impl Scene {
 
 fn on_button_refresh_system(_: On<Pointer<Click>>, steam: Res<steam::SteamClient>) {
 	request_lobby_list(steam);
+}
+
+fn on_button_enter_system(_: On<Pointer<Click>>, steam: Res<steam::SteamClient>, input: Single<&mut text::EditableText, With<InputLobby>>) {
+	let Ok(value) = input.value().to_string().parse::<u64>() else {
+		info!("You try parse a non interger value");
+		return;
+	};
+	let lobby_id = steam::LobbyId::from_raw(value);
+	steam.join_lobby(lobby_id);
 }
 
 fn on_button_back_system(_: On<Pointer<Press>>, mut state: ResMut<NextState<GameState>>) {
