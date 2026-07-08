@@ -9,15 +9,42 @@ pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
 	fn build(&self, app: &mut App) {
-		app.add_systems(Update, rotate_camera.run_if(in_state(GameState::InGame)));
+		app.add_systems(Update, movement_player.run_if(in_state(GameState::InGame)));
+		app.add_systems(Update, camera_player.run_if(in_state(GameState::InGame)));
 	}
 }
+
+#[derive(Debug, Component)]
+#[require(Transform, Camera3d, PlayerSpeed, CameraSensitivity)]
+pub struct Player;
 
 #[derive(Debug, Component, Reflect, Deref, DerefMut)]
 #[reflect(Component)]
 struct CameraSensitivity(Vec2);
 
-fn rotate_camera(accumulated_mouse_motion: Res<input::mouse::AccumulatedMouseMotion>, player: Single<(&mut Transform, &CameraSensitivity), With<Camera>>) {
+#[derive(Debug, Component)]
+pub struct PlayerSpeed(f32);
+
+fn movement_player(mut query: Query<(&mut PlayerSpeed, &mut Transform), With<Player>>, keys: Res<ButtonInput<KeyCode>>, time: Res<Time>) {
+	let delta = time.delta_secs();
+
+	for (speed, mut transform) in &mut query {
+		let PlayerSpeed(speed) = *speed;
+
+		let x = ((keys.pressed(KeyCode::KeyD) as i8) - (keys.pressed(KeyCode::KeyA) as i8)) as f32;
+		let z = ((keys.pressed(KeyCode::KeyS) as i8) - (keys.pressed(KeyCode::KeyW) as i8)) as f32;
+
+		let input = Vec3::new(x, 0.0, z);
+
+		if input.length_squared() > 0.0 {
+			let input = input.normalize();
+			let direction = transform.rotation * input;
+			transform.translation += direction * delta * speed;
+		}
+	}
+}
+
+fn camera_player(accumulated_mouse_motion: Res<input::mouse::AccumulatedMouseMotion>, player: Single<(&mut Transform, &CameraSensitivity), With<Camera>>) {
 	let (mut transform, camera_sensitivity) = player.into_inner();
 
 	let delta = accumulated_mouse_motion.delta;
@@ -39,5 +66,12 @@ impl Default for CameraSensitivity {
 	#[inline]
 	fn default() -> Self {
 		Self(Vec2::new(0.003, 0.002))
+	}
+}
+
+impl Default for PlayerSpeed {
+	#[inline(always)]
+	fn default() -> Self {
+		Self(4.0)
 	}
 }

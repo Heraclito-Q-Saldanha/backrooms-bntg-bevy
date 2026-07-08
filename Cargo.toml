@@ -23,3 +23,5 @@ avian3d = { version = "0.7.0", default-features = false, features = [
 ] }
 steamworks = "0.13.1"
 crossbeam = "0.8.4"
+wfc = { path = "../wfc" }
+rand = "0.10.2"
