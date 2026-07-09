@@ -5,10 +5,16 @@ use bevy::prelude::*;
 
 pub struct GamePlugin;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, wfc::Tile)]
 enum Tile {
+	#[weight(60)]
+	#[constraint(all=[Empty, Horizontal, Vertical])]
 	Empty,
+	#[weight(5)]
+	#[constraint(all=[Empty, Horizontal, Vertical])]
 	Horizontal,
+	#[weight(5)]
+	#[constraint(all=[Empty, Horizontal, Vertical])]
 	Vertical,
 }
 
@@ -18,44 +24,8 @@ impl Plugin for GamePlugin {
 	}
 }
 
-impl wfc::Tile for Tile {
-	fn all() -> &'static [Self] {
-		&[Self::Empty, Self::Horizontal, Self::Vertical]
-	}
-	fn allowed_down(&self) -> &'static [Self] {
-		match self {
-			Self::Horizontal => &[Self::Empty, Self::Horizontal, Self::Vertical],
-			_ => Self::all(),
-		}
-	}
-	fn allowed_left(&self) -> &'static [Self] {
-		match self {
-			Self::Horizontal => &[Self::Empty, Self::Horizontal, Self::Vertical],
-			_ => Self::all(),
-		}
-	}
-	fn allowed_right(&self) -> &'static [Self] {
-		match self {
-			Self::Horizontal => &[Self::Empty, Self::Horizontal, Self::Vertical],
-			_ => Self::all(),
-		}
-	}
-	fn allowed_up(&self) -> &'static [Self] {
-		match self {
-			_ => Self::all(),
-		}
-	}
-	fn weight(&self) -> u16 {
-		match self {
-			Self::Empty => 60,
-			Self::Vertical => 5,
-			Self::Horizontal => 5,
-		}
-	}
-}
-
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
-	let size = math::I64Vec2::new(40, 40);
+	let size = math::I64Vec2::new(64, 64);
 	let map = loop {
 		let seed = rand::random();
 		match wfc::map::Map2D::<Tile>::generate(size, seed) {
