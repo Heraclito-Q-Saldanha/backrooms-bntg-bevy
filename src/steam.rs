@@ -36,6 +36,9 @@ pub struct LobbyListUpdated(pub Vec<LobbyId>);
 #[derive(Event)]
 pub struct LobbyListUpdateFail(pub SteamError);
 
+#[derive(Event)]
+pub struct LobbyChatUpdate(pub steamworks::LobbyChatUpdate);
+
 #[derive(Resource)]
 struct EventReceiver {
 	events_receiver: channel::Receiver<Events>,
@@ -48,6 +51,7 @@ enum Events {
 	LobbyJoinFail,
 	LobbyListUpdated(Vec<steamworks::LobbyId>),
 	LobbyListUpdateFail(steamworks::SteamError),
+	LobbyChatUpdate(steamworks::LobbyChatUpdate),
 }
 
 impl Plugin for SteamPlugin {
@@ -61,6 +65,12 @@ impl Plugin for SteamPlugin {
 fn init(mut commands: Commands) {
 	let client = steamworks::Client::init_app(480).expect("fail to initialize Steam");
 	let (events_sender, events_receiver) = channel::unbounded();
+
+	let sender = events_sender.clone();
+
+	client.register_callback(move |update: steamworks::LobbyChatUpdate| {
+		let _ = sender.send(Events::LobbyChatUpdate(update));
+	});
 
 	commands.insert_resource(SteamClient { client, events_sender });
 	commands.insert_resource(EventReceiver { events_receiver });
@@ -79,6 +89,7 @@ fn process_events(mut commands: Commands, channel: Res<EventReceiver>) {
 			Events::LobbyJoinFail => commands.trigger(LobbyJoinFail),
 			Events::LobbyListUpdated(list) => commands.trigger(LobbyListUpdated(list)),
 			Events::LobbyListUpdateFail(err) => commands.trigger(LobbyListUpdateFail(err)),
+			Events::LobbyChatUpdate(value) => commands.trigger(LobbyChatUpdate(value)),
 		}
 	}
 }
@@ -133,5 +144,8 @@ impl SteamClient {
 	pub fn get_lobby_data(&self, lobby_id: LobbyId, key: &str) -> Option<String> {
 		let matchmaking = self.client.matchmaking();
 		matchmaking.lobby_data(lobby_id, key)
+	}
+	pub fn steam_id(&self) -> SteamId {
+		self.client.user().steam_id()
 	}
 }
