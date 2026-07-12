@@ -5,17 +5,16 @@ use bevy::prelude::*;
 
 pub struct GamePlugin;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, wfc::Tile)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, wfc::Tiled)]
+#[file = "assets/tiled/tiled.json"]
 enum Tile {
-	#[weight(60)]
-	#[constraint(all=[Empty, Horizontal, Vertical])]
-	Empty,
-	#[weight(5)]
-	#[constraint(all=[Empty, Horizontal, Vertical])]
-	Horizontal,
-	#[weight(5)]
-	#[constraint(all=[Empty, Horizontal, Vertical])]
-	Vertical,
+	Empty = 0,
+	TopRight = 1,
+	TopLeft = 2,
+	DownLeft = 3,
+	DownRight = 4,
+	Horizontal = 5,
+	Vertical = 6,
 }
 
 impl Plugin for GamePlugin {
@@ -45,11 +44,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
 	for x in 0..size.x {
 		for y in 0..size.y {
 			let tile = map.get_tile(math::i64vec2(x, y)).unwrap();
-			let id = match &tile {
-				Tile::Empty => 2,
-				Tile::Horizontal => 3,
-				Tile::Vertical => 5,
-			};
+			let id = tile as usize;
 			commands.spawn((
 				DespawnOnExit(GameState::InGame),
 				WorldAssetRoot(asset_server.load(GltfAssetLabel::Scene(id).from_asset("level_0.glb"))),
