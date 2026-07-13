@@ -28,6 +28,10 @@ rand = "0.10.2"
 
 [profile.dev]
 opt-level = 1
+strip = true
 
 [profile.dev.package."*"]
 opt-level = 3
+
+[profile.release]
+strip = true
