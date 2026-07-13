@@ -102,10 +102,14 @@ impl SteamClient {
 	pub fn create_lobby(&self, lobby_type: LobbyType, max_members: u32) {
 		let matchmaking = self.client.matchmaking();
 		let events_sender = self.events_sender.clone();
+		let current_lobby = self.current_lobby.clone();
 
 		matchmaking.create_lobby(lobby_type, max_members, move |result: Result<steamworks::LobbyId, _>| {
 			let _ = match result {
-				Ok(lobby_id) => events_sender.send(Events::LobbyCreated(lobby_id)),
+				Ok(lobby_id) => {
+					current_lobby.store(lobby_id.raw(), sync::atomic::Ordering::Relaxed);
+					events_sender.send(Events::LobbyCreated(lobby_id))
+				}
 				Err(err) => events_sender.send(Events::LobbyCreationFail(err)),
 			};
 		});
