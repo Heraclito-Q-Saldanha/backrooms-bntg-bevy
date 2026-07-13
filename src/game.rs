@@ -24,7 +24,7 @@ impl Plugin for GamePlugin {
 }
 
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
-	let size = math::I64Vec2::new(64, 64);
+	let size = math::I64Vec2::new(160, 160);
 	let map = loop {
 		let seed = rand::random();
 		match wfc::map::Map2D::<Tile>::generate(size, seed) {
