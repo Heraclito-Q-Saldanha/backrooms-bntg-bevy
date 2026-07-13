@@ -156,6 +156,10 @@ impl SteamClient {
 	pub fn steam_id(&self) -> SteamId {
 		self.client.user().steam_id()
 	}
+	pub fn lobby_members(&self, lobby_id: LobbyId) -> Vec<SteamId> {
+		let matchmaking = self.client.matchmaking();
+		matchmaking.lobby_members(lobby_id)
+	}
 	pub fn current_lobby(&self) -> Option<LobbyId> {
 		let value = self.current_lobby.load(sync::atomic::Ordering::Relaxed);
 		match value {
