@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use crossbeam::channel;
+use std::sync;
 
 pub struct SteamPlugin;
 
@@ -7,6 +8,7 @@ pub struct SteamPlugin;
 pub struct SteamClient {
 	client: steamworks::Client,
 	events_sender: channel::Sender<Events>,
+	current_lobby: sync::Arc<sync::atomic::AtomicU64>,
 }
 
 pub type SteamId = steamworks::SteamId;
@@ -72,7 +74,9 @@ fn init(mut commands: Commands) {
 		let _ = sender.send(Events::LobbyChatUpdate(update));
 	});
 
-	commands.insert_resource(SteamClient { client, events_sender });
+	let current_lobby = sync::Arc::new(sync::atomic::AtomicU64::new(u64::MAX));
+
+	commands.insert_resource(SteamClient { client, events_sender, current_lobby });
 	commands.insert_resource(EventReceiver { events_receiver });
 }
 
@@ -109,10 +113,14 @@ impl SteamClient {
 	pub fn join_lobby(&self, lobby_id: LobbyId) {
 		let matchmaking = self.client.matchmaking();
 		let events_sender = self.events_sender.clone();
+		let current_lobby = self.current_lobby.clone();
 
 		matchmaking.join_lobby(lobby_id, move |result| {
 			let _ = match result {
-				Ok(lobby_id) => events_sender.send(Events::LobbyJoined(lobby_id)),
+				Ok(lobby_id) => {
+					current_lobby.store(lobby_id.raw(), sync::atomic::Ordering::Relaxed);
+					events_sender.send(Events::LobbyJoined(lobby_id))
+				}
 				Err(_) => events_sender.send(Events::LobbyJoinFail),
 			};
 		});
@@ -147,5 +155,12 @@ impl SteamClient {
 	}
 	pub fn steam_id(&self) -> SteamId {
 		self.client.user().steam_id()
+	}
+	pub fn current_lobby(&self) -> Option<LobbyId> {
+		let value = self.current_lobby.load(sync::atomic::Ordering::Relaxed);
+		match value {
+			u64::MAX => None,
+			raw => Some(LobbyId::from_raw(raw)),
+		}
 	}
 }
