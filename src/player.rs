@@ -15,8 +15,12 @@ impl Plugin for PlayerPlugin {
 }
 
 #[derive(Debug, Component)]
+#[require(Transform)]
+pub struct Player(pub steam::SteamId);
+
+#[derive(Debug, Component)]
 #[require(Transform, Camera3d, PlayerSpeed, CameraSensitivity)]
-pub struct Player;
+pub struct LocalPlayer;
 
 #[derive(Debug, Component, Reflect, Deref, DerefMut)]
 #[reflect(Component)]
@@ -25,7 +29,7 @@ struct CameraSensitivity(Vec2);
 #[derive(Debug, Component)]
 pub struct PlayerSpeed(f32);
 
-fn movement_player(mut query: Query<(&mut PlayerSpeed, &mut Transform), With<Player>>, keys: Res<ButtonInput<KeyCode>>, time: Res<Time>) {
+fn movement_player(mut query: Query<(&mut PlayerSpeed, &mut Transform), With<LocalPlayer>>, keys: Res<ButtonInput<KeyCode>>, time: Res<Time>) {
 	let delta = time.delta_secs();
 
 	for (speed, mut transform) in &mut query {
@@ -44,7 +48,7 @@ fn movement_player(mut query: Query<(&mut PlayerSpeed, &mut Transform), With<Pla
 	}
 }
 
-fn camera_player(accumulated_mouse_motion: Res<input::mouse::AccumulatedMouseMotion>, player: Single<(&mut Transform, &CameraSensitivity), With<Camera>>) {
+fn camera_player(accumulated_mouse_motion: Res<input::mouse::AccumulatedMouseMotion>, player: Single<(&mut Transform, &CameraSensitivity), With<LocalPlayer>>) {
 	let (mut transform, camera_sensitivity) = player.into_inner();
 
 	let delta = accumulated_mouse_motion.delta;

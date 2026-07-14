@@ -23,7 +23,7 @@ impl Plugin for GamePlugin {
 	}
 }
 
-fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+fn setup(mut commands: Commands, asset_server: Res<AssetServer>, steam: Res<steam::SteamClient>) {
 	let size = math::I64Vec2::new(160, 160);
 	let map = loop {
 		let seed = rand::random();
@@ -39,7 +39,17 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
 		commands.spawn(dev_tools::infinite_grid::InfiniteGrid);
 	}
 
-	commands.spawn(player::Player);
+	let lobby_id = steam.current_lobby().unwrap();
+	let member_ids = steam.lobby_members(lobby_id);
+	let my_id = steam.steam_id();
+
+	for member_id in member_ids {
+		if my_id == member_id {
+			commands.spawn((player::Player(member_id), player::LocalPlayer));
+		} else {
+			commands.spawn(player::Player(member_id));
+		}
+	}
 
 	for x in 0..size.x {
 		for y in 0..size.y {
