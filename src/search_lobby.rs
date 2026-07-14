@@ -87,8 +87,8 @@ fn scene() -> impl Scene {
 							Text("Back")
 							TextColor(tailwind::ZINC_100)
 						)]
-						ui::change_bg_on_pointer::<Enter>(tailwind::EMERALD_700.into())
-						ui::change_bg_on_pointer::<Leave>(tailwind::EMERALD_600.into())
+						ui::change_bg_on_pointer_if_enable::<Enter>(tailwind::EMERALD_700.into())
+						ui::change_bg_on_pointer_if_enable::<Leave>(tailwind::EMERALD_600.into())
 						on(on_button_back_system)
 					),
 					(
@@ -130,8 +130,8 @@ fn scene() -> impl Scene {
 									Text("Enter")
 									TextColor(tailwind::ZINC_100)
 								)]
-								ui::change_bg_on_pointer::<Enter>(tailwind::EMERALD_700.into())
-								ui::change_bg_on_pointer::<Leave>(tailwind::EMERALD_600.into())
+								ui::change_bg_on_pointer_if_enable::<Enter>(tailwind::EMERALD_700.into())
+								ui::change_bg_on_pointer_if_enable::<Leave>(tailwind::EMERALD_600.into())
 								on(on_button_enter_system)
 							),
 							(
@@ -150,8 +150,8 @@ fn scene() -> impl Scene {
 									Text("Refresh")
 									TextColor(tailwind::ZINC_100)
 								)]
-								ui::change_bg_on_pointer::<Enter>(tailwind::EMERALD_700.into())
-								ui::change_bg_on_pointer::<Leave>(tailwind::EMERALD_600.into())
+								ui::change_bg_on_pointer_if_enable::<Enter>(tailwind::EMERALD_700.into())
+								ui::change_bg_on_pointer_if_enable::<Leave>(tailwind::EMERALD_600.into())
 								on(on_button_refresh_system)
 							)
 						]
@@ -195,8 +195,8 @@ fn lobby_entry_component(label: &str, lobby_id: steam::LobbyId) -> impl Scene {
 			Text(label)
 			TextColor(tailwind::ZINC_100)
 		)]
-		ui::change_bg_on_pointer::<Enter>(tailwind::EMERALD_700.into())
-		ui::change_bg_on_pointer::<Leave>(tailwind::EMERALD_600.into())
+		ui::change_bg_on_pointer_if_enable::<Enter>(tailwind::EMERALD_700.into())
+		ui::change_bg_on_pointer_if_enable::<Leave>(tailwind::EMERALD_600.into())
 		on(move |_: On<Pointer<Click>>, mut query: Single<&mut text::EditableText, With<InputLobby>>| {
 			let text = lobby_id.raw().to_string();
 			query.editor_mut().set_text(&text);

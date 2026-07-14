@@ -62,8 +62,8 @@ fn scene() -> impl Scene {
 					Text("Create")
 					TextColor(tailwind::ZINC_100)
 				)]
-				ui::change_bg_on_pointer::<Enter>(tailwind::EMERALD_700.into())
-				ui::change_bg_on_pointer::<Leave>(tailwind::EMERALD_600.into())
+				ui::change_bg_on_pointer_if_enable::<Enter>(tailwind::EMERALD_700.into())
+				ui::change_bg_on_pointer_if_enable::<Leave>(tailwind::EMERALD_600.into())
 				on(on_create_button_click)
 			)
 		]

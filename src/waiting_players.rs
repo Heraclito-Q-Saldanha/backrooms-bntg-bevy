@@ -84,8 +84,8 @@ fn player_entry_component(label: &str) -> impl Scene {
 			Text(label)
 			TextColor(tailwind::ZINC_100)
 		)]
-		ui::change_bg_on_pointer::<Enter>(tailwind::EMERALD_700.into())
-		ui::change_bg_on_pointer::<Leave>(tailwind::EMERALD_600.into())
+		ui::change_bg_on_pointer_if_enable::<Enter>(tailwind::EMERALD_700.into())
+		ui::change_bg_on_pointer_if_enable::<Leave>(tailwind::EMERALD_600.into())
 	}
 }
 
@@ -130,8 +130,8 @@ fn scene() -> impl Scene {
 							Text("Back")
 							TextColor(tailwind::ZINC_100)
 						)]
-						ui::change_bg_on_pointer::<Enter>(tailwind::EMERALD_700.into())
-						ui::change_bg_on_pointer::<Leave>(tailwind::EMERALD_600.into())
+						ui::change_bg_on_pointer_if_enable::<Enter>(tailwind::EMERALD_700.into())
+						ui::change_bg_on_pointer_if_enable::<Leave>(tailwind::EMERALD_600.into())
 						on(on_button_back_system)
 					),
 					(
@@ -151,8 +151,8 @@ fn scene() -> impl Scene {
 							TextColor(tailwind::ZINC_100)
 						)]
 						StartButton
-						ui::change_bg_on_pointer::<Enter>(tailwind::EMERALD_700.into())
-						ui::change_bg_on_pointer::<Leave>(tailwind::EMERALD_600.into())
+						ui::change_bg_on_pointer_if_enable::<Enter>(tailwind::EMERALD_700.into())
+						ui::change_bg_on_pointer_if_enable::<Leave>(tailwind::EMERALD_600.into())
 						on(on_button_start_system)
 					)
 				]
