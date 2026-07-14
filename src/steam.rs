@@ -19,7 +19,6 @@ pub type LobbyId = steamworks::LobbyId;
 pub type SendFlags = steamworks::networking_types::SendFlags;
 pub type LobbyType = steamworks::LobbyType;
 pub type Friend = steamworks::Friend;
-
 pub type SteamError = steamworks::SteamError;
 
 #[derive(Event)]
@@ -76,8 +75,11 @@ impl Plugin for SteamPlugin {
 fn init(mut commands: Commands) {
 	let client = steamworks::Client::init_app(480).expect("fail to initialize Steam");
 	let (events_sender, events_receiver) = channel::unbounded();
-
 	let current_lobby = sync::Arc::new(sync::atomic::AtomicU64::new(u64::MAX));
+
+	client.networking_messages().session_request_callback(|request| {
+		request.accept();
+	});
 
 	commands.insert_resource(SteamClient { client, events_sender, current_lobby });
 	commands.insert_resource(EventReceiver { events_receiver });
