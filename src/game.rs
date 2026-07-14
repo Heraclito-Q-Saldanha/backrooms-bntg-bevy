@@ -20,10 +20,28 @@ enum Tile {
 impl Plugin for GamePlugin {
 	fn build(&self, app: &mut App) {
 		app.add_systems(OnEnter(GameState::InGame), setup);
+		app.add_observer(despawn_players.run_if(in_state(GameState::InGame)));
 	}
 }
 
-fn setup(mut commands: Commands, asset_server: Res<AssetServer>, steam: Res<steam::SteamClient>) {
+fn despawn_players(event: On<steam::LobbyChatUpdate>, players: Query<(Entity, &player::Player)>, mut commands: Commands) {
+	match event.0.member_state_change {
+		steam::ChatMemberStateChange::Left | steamworks::ChatMemberStateChange::Disconnected | steamworks::ChatMemberStateChange::Banned | steamworks::ChatMemberStateChange::Kicked => {
+			let steam_id = event.0.user_changed;
+
+			for (entity, player) in players {
+				if player.0 != steam_id {
+					continue;
+				}
+
+				commands.entity(entity).despawn();
+			}
+		}
+		_ => {}
+	}
+}
+
+fn setup(mut commands: Commands, asset_server: Res<AssetServer>, mut meshes: ResMut<Assets<Mesh>>, mut materials: ResMut<Assets<StandardMaterial>>, steam: Res<steam::SteamClient>) {
 	let size = math::I64Vec2::new(160, 160);
 	let map = loop {
 		let seed = rand::random();
@@ -44,11 +62,22 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>, steam: Res<stea
 	let my_id = steam.steam_id();
 
 	for member_id in member_ids {
-		let transform = Transform::from_xyz(size.x as f32, 1.65f32, size.y as f32);
+		let transform = Transform::from_xyz(size.x as f32, 1.60f32, size.y as f32);
 		if my_id == member_id {
-			commands.spawn((player::Player(member_id), player::LocalPlayer, transform));
+			commands.spawn((
+				Mesh3d(meshes.add(Mesh::from(Capsule3d::default()))),
+				MeshMaterial3d(materials.add(Color::from(Srgba::WHITE))),
+				player::Player(member_id),
+				player::LocalPlayer,
+				transform,
+			));
 		} else {
-			commands.spawn((player::Player(member_id), transform));
+			commands.spawn((
+				Mesh3d(meshes.add(Mesh::from(Capsule3d::default()))),
+				MeshMaterial3d(materials.add(Color::from(Srgba::BLUE))),
+				player::Player(member_id),
+				transform,
+			));
 		}
 	}
 

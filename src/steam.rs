@@ -20,6 +20,7 @@ pub type SendFlags = steamworks::networking_types::SendFlags;
 pub type LobbyType = steamworks::LobbyType;
 pub type Friend = steamworks::Friend;
 pub type SteamError = steamworks::SteamError;
+pub type ChatMemberStateChange = steamworks::ChatMemberStateChange;
 
 #[derive(Event)]
 pub struct LobbyCreated(pub LobbyId);
