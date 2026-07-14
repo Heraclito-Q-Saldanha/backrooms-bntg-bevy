@@ -15,6 +15,7 @@ pub type SteamId = steamworks::SteamId;
 pub type LobbyId = steamworks::LobbyId;
 pub type SendFlags = steamworks::networking_types::SendFlags;
 pub type LobbyType = steamworks::LobbyType;
+pub type Friend = steamworks::Friend;
 pub type NetworkingMessage = steamworks::networking_types::NetworkingMessage;
 pub type NetworkingIdentity = steamworks::networking_types::NetworkingIdentity;
 
@@ -169,5 +170,22 @@ impl SteamClient {
 			u64::MAX => None,
 			raw => Some(LobbyId::from_raw(raw)),
 		}
+	}
+	pub fn set_lobby_joinable(&self, lobby_id: LobbyId, joinable: bool) -> bool {
+		let matchmaking = self.client.matchmaking();
+		matchmaking.set_lobby_joinable(lobby_id, joinable)
+	}
+	pub fn leave_lobby(&self, lobby_id: LobbyId) {
+		let matchmaking = self.client.matchmaking();
+		self.current_lobby.store(u64::MAX, sync::atomic::Ordering::Relaxed);
+		matchmaking.leave_lobby(lobby_id);
+	}
+	pub fn get_friend(&self, steam_id: SteamId) -> Friend {
+		let friends = self.client.friends();
+		friends.get_friend(steam_id)
+	}
+	pub fn lobby_owner(&self, lobby_id: LobbyId) -> SteamId {
+		let matchmaking = self.client.matchmaking();
+		matchmaking.lobby_owner(lobby_id)
 	}
 }

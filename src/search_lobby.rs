@@ -38,7 +38,7 @@ fn on_lobby_joined(event: On<steam::LobbyJoined>, mut state: ResMut<NextState<Ga
 	let lobby_id = event.0;
 	info!(r#"Lobby "{}" joined"#, lobby_id.raw());
 
-	state.set(GameState::InGame);
+	state.set(GameState::WaitingForPlayers);
 }
 
 fn request_lobby_list(steam: Res<steam::SteamClient>) {

@@ -5,6 +5,7 @@ mod player;
 mod search_lobby;
 mod steam;
 mod ui;
+mod waiting_players;
 
 use bevy::prelude::*;
 
@@ -14,6 +15,7 @@ pub enum GameState {
 	Menu,
 	SearchLobby,
 	CreatingLobby,
+	WaitingForPlayers,
 	InGame,
 }
 
@@ -28,6 +30,7 @@ fn main() {
 	app.add_plugins(main_menu::MainMenuPlugin);
 	app.add_plugins(search_lobby::SearchLobbyPlugin);
 	app.add_plugins(create_lobby::CreateLobbyPlugin);
+	app.add_plugins(waiting_players::WaitingPlayersPlugin);
 	app.add_plugins(game::GamePlugin);
 	app.add_plugins(player::PlayerPlugin);
 	app.add_plugins(bevy_skein::SkeinPlugin::default());

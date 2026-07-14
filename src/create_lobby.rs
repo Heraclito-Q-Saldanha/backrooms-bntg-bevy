@@ -81,5 +81,5 @@ fn on_lobby_created(event: On<steam::LobbyCreated>, mut state: ResMut<NextState<
 
 	info!(r#"Lobby "{}" created"#, lobby_id.raw());
 	steam.set_lobby_data(lobby_id, "name", name);
-	state.set(GameState::InGame);
+	state.set(GameState::WaitingForPlayers);
 }
