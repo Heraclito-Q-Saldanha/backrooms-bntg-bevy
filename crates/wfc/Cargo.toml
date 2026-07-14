@@ -1,0 +1,17 @@
+[package]
+name = "wfc"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+wfc_derive = { path = "../wfc_derive" }
+rand = "0.10.2"
+bevy = { version = "0.19.0", default-features = false }
+serde = { version = "1.0.228", features = ["derive"], optional = true }
+
+[dev-dependencies]
+bevy = "0.19.0"
+
+[features]
+serde = ["dep:serde"]
+default = ["serde"]

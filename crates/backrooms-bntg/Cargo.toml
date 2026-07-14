@@ -1,0 +1,29 @@
+[package]
+name = "backrooms-bntg"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+bevy = { version = "0.19.0", features = ["bevy_dev_tools", "jpeg"] }
+bevy-inspector-egui = "0.37.0"
+bevy_skein = "0.6.0"
+avian3d = { version = "0.7.0", default-features = false, features = [
+    "3d",
+    "f64",
+    "default-collider",
+    "parry-f64",
+    "xpbd_joints",
+    "collider-from-mesh",
+    "bevy_scene",
+    "bevy_picking",
+    "debug-plugin",
+    "enhanced-determinism",
+    "parallel",
+    "serialize",
+] }
+steamworks = "0.13.1"
+crossbeam = "0.8.4"
+wfc = { path = "../wfc" }
+rand = "0.10.2"
+serde = { version = "1", features = ["derive"] }
+postcard = { version = "1", features = ["alloc"] }
