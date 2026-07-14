@@ -65,6 +65,7 @@ fn on_network_message(event: On<networking::MessageReceive>, mut state: ResMut<N
 				state.set(GameState::InGame);
 			}
 		}
+		_ => {}
 	}
 }
 

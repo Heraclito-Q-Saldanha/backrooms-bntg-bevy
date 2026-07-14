@@ -7,6 +7,7 @@ pub struct NetworkingPlugin;
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub enum Message {
 	StartGame,
+	Position(Vec3),
 }
 
 #[derive(Debug, Clone, Event)]

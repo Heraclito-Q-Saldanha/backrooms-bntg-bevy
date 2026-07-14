@@ -11,6 +11,7 @@ impl Plugin for PlayerPlugin {
 	fn build(&self, app: &mut App) {
 		app.add_systems(Update, movement_player.run_if(in_state(GameState::InGame)));
 		app.add_systems(Update, camera_player.run_if(in_state(GameState::InGame)));
+		app.add_observer(on_network_message);
 	}
 }
 
@@ -29,7 +30,23 @@ struct CameraSensitivity(Vec2);
 #[derive(Debug, Component)]
 pub struct PlayerSpeed(f32);
 
-fn movement_player(query: Single<(&mut PlayerSpeed, &mut Transform), With<LocalPlayer>>, keys: Res<ButtonInput<KeyCode>>, time: Res<Time>) {
+fn on_network_message(event: On<networking::MessageReceive>, players: Query<(&mut Transform, &mut Player)>) {
+	match event.data {
+		networking::Message::Position(position) => {
+			let steam_id = event.steam_id;
+
+			for (mut transform, player) in players {
+				if player.0 != steam_id {
+					continue;
+				}
+				transform.translation = position;
+			}
+		}
+		_ => {}
+	}
+}
+
+fn movement_player(query: Single<(&mut PlayerSpeed, &mut Transform), With<LocalPlayer>>, keys: Res<ButtonInput<KeyCode>>, time: Res<Time>, mut commands: Commands) {
 	let (speed, mut transform) = query.into_inner();
 
 	let delta = time.delta_secs();
@@ -43,6 +60,11 @@ fn movement_player(query: Single<(&mut PlayerSpeed, &mut Transform), With<LocalP
 		let input = input.normalize();
 		let direction = transform.rotation * input;
 		transform.translation += direction * delta * speed.0;
+
+		commands.trigger(networking::BroadcastMessage {
+			send_flags: steam::SendFlags::NO_NAGLE | steam::SendFlags::UNRELIABLE,
+			data: networking::Message::Position(transform.translation),
+		});
 	}
 }
 
