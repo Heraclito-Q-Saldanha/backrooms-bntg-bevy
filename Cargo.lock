@@ -6688,6 +6688,7 @@ dependencies = [
  "bevy",
  "derive",
  "rand",
+ "serde",
 ]
 
 [[package]]

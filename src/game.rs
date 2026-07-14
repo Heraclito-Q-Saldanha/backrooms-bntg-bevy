@@ -5,9 +5,9 @@ use bevy::prelude::*;
 
 pub struct GamePlugin;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, wfc::Tiled)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Component, wfc::Tiled, serde::Serialize, serde::Deserialize)]
 #[file = "assets/tiled/tiled.json"]
-enum Tile {
+pub enum Tile {
 	Empty = 0,
 	TopRight = 1,
 	TopLeft = 2,
@@ -21,6 +21,16 @@ impl Plugin for GamePlugin {
 	fn build(&self, app: &mut App) {
 		app.add_systems(OnEnter(GameState::InGame), setup);
 		app.add_observer(despawn_players.run_if(in_state(GameState::InGame)));
+		app.add_observer(on_network_message);
+	}
+}
+
+fn on_network_message(event: On<networking::MessageReceive>, asset_server: Res<AssetServer>, mut commands: Commands) {
+	match &event.data {
+		networking::Message::Map(map) => {
+			spawn_map(map, asset_server, &mut commands);
+		}
+		_ => {}
 	}
 }
 
@@ -43,13 +53,6 @@ fn despawn_players(event: On<steam::LobbyChatUpdate>, players: Query<(Entity, &p
 
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>, mut meshes: ResMut<Assets<Mesh>>, mut materials: ResMut<Assets<StandardMaterial>>, steam: Res<steam::SteamClient>) {
 	let size = math::I64Vec2::new(160, 160);
-	let map = loop {
-		let seed = rand::random();
-		match wfc::map::Map2D::<Tile>::generate(size, seed) {
-			Ok(value) => break value,
-			Err(_) => continue,
-		}
-	};
 
 	#[cfg(debug_assertions)]
 	{
@@ -59,6 +62,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>, mut meshes: Res
 
 	let lobby_id = steam.current_lobby().unwrap();
 	let member_ids = steam.lobby_members(lobby_id);
+	let owner_id = steam.lobby_owner(lobby_id);
 	let my_id = steam.steam_id();
 
 	for member_id in member_ids {
@@ -81,6 +85,28 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>, mut meshes: Res
 		}
 	}
 
+	if owner_id != my_id {
+		return;
+	}
+
+	let map = loop {
+		let seed = rand::random();
+		match wfc::map::Map2D::<Tile>::generate(size, seed) {
+			Ok(value) => break value,
+			Err(_) => continue,
+		}
+	};
+
+	spawn_map(&map, asset_server, &mut commands);
+
+	commands.trigger(networking::BroadcastMessage {
+		send_flags: steam::SendFlags::RELIABLE,
+		data: networking::Message::Map(map),
+	});
+}
+
+fn spawn_map(map: &wfc::map::Map2D<Tile>, asset_server: Res<AssetServer>, commands: &mut Commands) {
+	let size = map.size();
 	for x in 0..size.x {
 		for y in 0..size.y {
 			let tile = map.get_tile(math::i64vec2(x, y)).unwrap();
@@ -89,6 +115,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>, mut meshes: Res
 				DespawnOnExit(GameState::InGame),
 				WorldAssetRoot(asset_server.load(GltfAssetLabel::Scene(id).from_asset("level_0.glb"))),
 				Transform::from_xyz(x as f32 * 2.0, 0f32, y as f32 * 2.0),
+				tile,
 			));
 		}
 	}
