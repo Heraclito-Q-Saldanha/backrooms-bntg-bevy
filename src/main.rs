@@ -1,12 +1,12 @@
-mod create_lobby;
-mod game;
-mod main_menu;
-mod networking;
-mod player;
-mod search_lobby;
-mod steam;
-mod ui;
-mod waiting_players;
+pub mod create_lobby;
+pub mod game;
+pub mod main_menu;
+pub mod networking;
+pub mod player;
+pub mod search_lobby;
+pub mod steam;
+pub mod ui;
+pub mod waiting_players;
 
 use bevy::prelude::*;
 

@@ -48,8 +48,8 @@ fn update_player_list(query: Single<Entity, With<PlayerList>>, steam: Res<steam:
 	for steam_id in players {
 		let friend = steam.get_friend(steam_id);
 		let name = friend.nick_name().unwrap_or(friend.name());
-
 		let id = commands.spawn_scene(player_entry_component(&name)).id();
+
 		commands.entity(*query).add_child(id);
 	}
 }
