@@ -15,6 +15,7 @@ struct StartButton;
 impl Plugin for WaitingPlayersPlugin {
 	fn build(&self, app: &mut App) {
 		app.add_systems(OnEnter(GameState::WaitingForPlayers), (scene.spawn(), update_player_list, setup_start_button).chain());
+		app.add_observer(on_network_message);
 		app.add_observer(lobby_update);
 	}
 }
@@ -53,6 +54,20 @@ fn update_player_list(query: Single<Entity, With<PlayerList>>, steam: Res<steam:
 	}
 }
 
+fn on_network_message(event: On<networking::MessageReceive>, mut state: ResMut<NextState<GameState>>, steam: Res<steam::SteamClient>) {
+	match event.data {
+		networking::Message::StartGame => {
+			let Some(lobby_id) = steam.current_lobby() else {
+				return;
+			};
+			let owner_id = steam.lobby_owner(lobby_id);
+			if owner_id == event.steam_id {
+				state.set(GameState::InGame);
+			}
+		}
+	}
+}
+
 fn on_button_back_system(_: On<Pointer<Press>>, mut state: ResMut<NextState<GameState>>, steam: Res<steam::SteamClient>) {
 	if let Some(lobby_id) = steam.current_lobby() {
 		steam.leave_lobby(lobby_id);
@@ -60,10 +75,14 @@ fn on_button_back_system(_: On<Pointer<Press>>, mut state: ResMut<NextState<Game
 	state.set(GameState::Menu);
 }
 
-fn on_button_start_system(_: On<Pointer<Press>>, _: Single<&StartButton, Without<InteractionDisabled>>, mut state: ResMut<NextState<GameState>>, steam: Res<steam::SteamClient>) {
+fn on_button_start_system(_: On<Pointer<Press>>, _: Single<&StartButton, Without<InteractionDisabled>>, steam: Res<steam::SteamClient>, mut state: ResMut<NextState<GameState>>, mut commands: Commands) {
 	if let Some(lobby_id) = steam.current_lobby() {
 		steam.set_lobby_joinable(lobby_id, false);
 	}
+	commands.trigger(networking::BroadcastMessage {
+		send_flags: steam::SendFlags::RELIABLE,
+		data: networking::Message::StartGame,
+	});
 	state.set(GameState::InGame);
 }
 

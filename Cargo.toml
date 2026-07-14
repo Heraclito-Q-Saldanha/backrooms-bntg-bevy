@@ -25,6 +25,8 @@ steamworks = "0.13.1"
 crossbeam = "0.8.4"
 wfc = { path = "../wfc" }
 rand = "0.10.2"
+serde = { version = "1", features = ["derive"] }
+postcard = { version = "1", features = ["alloc"] }
 
 [profile.dev]
 opt-level = 1

@@ -1,6 +1,7 @@
 mod create_lobby;
 mod game;
 mod main_menu;
+mod networking;
 mod player;
 mod search_lobby;
 mod steam;
@@ -33,6 +34,7 @@ fn main() {
 	app.add_plugins(waiting_players::WaitingPlayersPlugin);
 	app.add_plugins(game::GamePlugin);
 	app.add_plugins(player::PlayerPlugin);
+	app.add_plugins(networking::NetworkingPlugin);
 	app.add_plugins(bevy_skein::SkeinPlugin::default());
 	app.add_plugins(avian3d::PhysicsPlugins::default());
 
