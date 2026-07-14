@@ -2,6 +2,9 @@ use bevy::prelude::*;
 use crossbeam::channel;
 use std::sync;
 
+const DEFAULT_CHANNEL: u32 = 0;
+const DEFAULT_BATCH_SIZE: usize = 16;
+
 pub struct SteamPlugin;
 
 #[derive(Resource)]
@@ -16,8 +19,6 @@ pub type LobbyId = steamworks::LobbyId;
 pub type SendFlags = steamworks::networking_types::SendFlags;
 pub type LobbyType = steamworks::LobbyType;
 pub type Friend = steamworks::Friend;
-pub type NetworkingMessage = steamworks::networking_types::NetworkingMessage;
-pub type NetworkingIdentity = steamworks::networking_types::NetworkingIdentity;
 
 pub type SteamError = steamworks::SteamError;
 
@@ -42,6 +43,12 @@ pub struct LobbyListUpdateFail(pub SteamError);
 #[derive(Event)]
 pub struct LobbyChatUpdate(pub steamworks::LobbyChatUpdate);
 
+#[derive(Event)]
+pub struct MessageReceived {
+	pub sender: SteamId,
+	pub data: Vec<u8>,
+}
+
 #[derive(Resource)]
 struct EventReceiver {
 	events_receiver: channel::Receiver<Events>,
@@ -55,6 +62,7 @@ enum Events {
 	LobbyListUpdated(Vec<steamworks::LobbyId>),
 	LobbyListUpdateFail(steamworks::SteamError),
 	LobbyChatUpdate(steamworks::LobbyChatUpdate),
+	MessageReceived(MessageReceived),
 }
 
 impl Plugin for SteamPlugin {
@@ -82,6 +90,14 @@ fn run_callbacks(steam: Res<SteamClient>) {
 		}
 		_ => {}
 	});
+	let msgs = steam.client.networking_messages().receive_messages_on_channel(DEFAULT_CHANNEL, DEFAULT_BATCH_SIZE);
+	for msg in msgs {
+		let Some(sender) = msg.identity_peer().steam_id() else {
+			continue;
+		};
+		let data = msg.data().to_vec();
+		let _ = steam.events_sender.send(Events::MessageReceived(MessageReceived { sender, data }));
+	}
 }
 
 fn process_events(mut commands: Commands, channel: Res<EventReceiver>) {
@@ -94,6 +110,7 @@ fn process_events(mut commands: Commands, channel: Res<EventReceiver>) {
 			Events::LobbyListUpdated(list) => commands.trigger(LobbyListUpdated(list)),
 			Events::LobbyListUpdateFail(err) => commands.trigger(LobbyListUpdateFail(err)),
 			Events::LobbyChatUpdate(value) => commands.trigger(LobbyChatUpdate(value)),
+			Events::MessageReceived(msg) => commands.trigger(msg),
 		}
 	}
 }
@@ -140,14 +157,11 @@ impl SteamClient {
 			};
 		});
 	}
-	pub fn send_message_to_user(&self, networking_identity: NetworkingIdentity, send_flags: SendFlags, data: &[u8], channel: u32) -> Result<(), SteamError> {
+	pub fn send_message_to_user(&self, steam_id: SteamId, send_flags: SendFlags, data: &[u8]) -> Result<(), SteamError> {
 		let networking_messages = self.client.networking_messages();
+		let networking_identity = steam_id.into();
 
-		Ok(networking_messages.send_message_to_user(networking_identity, send_flags, data, channel)?)
-	}
-	pub fn receive_messages_on_channel(&self, channel: u32, batch_size: usize) -> Vec<NetworkingMessage> {
-		let networking_messages = self.client.networking_messages();
-		networking_messages.receive_messages_on_channel(channel, batch_size)
+		networking_messages.send_message_to_user(networking_identity, send_flags, data, DEFAULT_CHANNEL)
 	}
 	pub fn set_lobby_data(&self, lobby_id: LobbyId, key: &str, value: &str) -> bool {
 		let matchmaking = self.client.matchmaking();
