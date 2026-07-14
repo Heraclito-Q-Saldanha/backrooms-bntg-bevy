@@ -68,12 +68,6 @@ fn init(mut commands: Commands) {
 	let client = steamworks::Client::init_app(480).expect("fail to initialize Steam");
 	let (events_sender, events_receiver) = channel::unbounded();
 
-	let sender = events_sender.clone();
-
-	client.register_callback(move |update: steamworks::LobbyChatUpdate| {
-		let _ = sender.send(Events::LobbyChatUpdate(update));
-	});
-
 	let current_lobby = sync::Arc::new(sync::atomic::AtomicU64::new(u64::MAX));
 
 	commands.insert_resource(SteamClient { client, events_sender, current_lobby });
@@ -81,7 +75,12 @@ fn init(mut commands: Commands) {
 }
 
 fn run_callbacks(steam: Res<SteamClient>) {
-	steam.client.run_callbacks();
+	steam.client.process_callbacks(|event| match event {
+		steamworks::CallbackResult::LobbyChatUpdate(update) => {
+			let _ = steam.events_sender.send(Events::LobbyChatUpdate(update));
+		}
+		_ => {}
+	});
 }
 
 fn process_events(mut commands: Commands, channel: Res<EventReceiver>) {
