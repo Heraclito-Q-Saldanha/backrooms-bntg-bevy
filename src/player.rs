@@ -29,22 +29,20 @@ struct CameraSensitivity(Vec2);
 #[derive(Debug, Component)]
 pub struct PlayerSpeed(f32);
 
-fn movement_player(mut query: Query<(&mut PlayerSpeed, &mut Transform), With<LocalPlayer>>, keys: Res<ButtonInput<KeyCode>>, time: Res<Time>) {
+fn movement_player(query: Single<(&mut PlayerSpeed, &mut Transform), With<LocalPlayer>>, keys: Res<ButtonInput<KeyCode>>, time: Res<Time>) {
+	let (speed, mut transform) = query.into_inner();
+
 	let delta = time.delta_secs();
 
-	for (speed, mut transform) in &mut query {
-		let PlayerSpeed(speed) = *speed;
+	let x = ((keys.pressed(KeyCode::KeyD) as i8) - (keys.pressed(KeyCode::KeyA) as i8)) as f32;
+	let z = ((keys.pressed(KeyCode::KeyS) as i8) - (keys.pressed(KeyCode::KeyW) as i8)) as f32;
 
-		let x = ((keys.pressed(KeyCode::KeyD) as i8) - (keys.pressed(KeyCode::KeyA) as i8)) as f32;
-		let z = ((keys.pressed(KeyCode::KeyS) as i8) - (keys.pressed(KeyCode::KeyW) as i8)) as f32;
+	let input = Vec3::new(x, 0.0, z);
 
-		let input = Vec3::new(x, 0.0, z);
-
-		if input.length_squared() > 0.0 {
-			let input = input.normalize();
-			let direction = transform.rotation * input;
-			transform.translation += direction * delta * speed;
-		}
+	if input.length_squared() > 0.0 {
+		let input = input.normalize();
+		let direction = transform.rotation * input;
+		transform.translation += direction * delta * speed.0;
 	}
 }
 
