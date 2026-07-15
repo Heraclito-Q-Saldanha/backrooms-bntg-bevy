@@ -32,7 +32,7 @@ struct CameraSensitivity(Vec2);
 pub struct PlayerSpeed(f32);
 
 fn config_camera(event: On<Add, LocalPlayer>, mut commands: Commands) {
-	commands.entity(event.entity).insert((Camera3d::default(), AmbientLight { brightness: 0.025, ..Default::default() }));
+	commands.entity(event.entity).insert((Camera3d::default(), AmbientLight { brightness: 0.005, ..Default::default() }));
 }
 
 fn on_network_message(event: On<networking::MessageReceive>, players: Query<(&mut Transform, &mut Player)>) {
