@@ -1,7 +1,9 @@
 use crate::*;
 
+use bevy::anti_alias;
 use bevy::core_pipeline;
 use bevy::input;
+use bevy::pbr;
 use bevy::post_process;
 use bevy::prelude::*;
 
@@ -38,6 +40,9 @@ fn config_camera(event: On<Add, LocalPlayer>, mut commands: Commands) {
 		Camera3d::default(),
 		core_pipeline::tonemapping::Tonemapping::TonyMcMapface,
 		post_process::bloom::Bloom { intensity: 0.5, ..Default::default() },
+		pbr::ScreenSpaceAmbientOcclusion::default(),
+		anti_alias::taa::TemporalAntiAliasing::default(),
+		Msaa::Off,
 	));
 }
 
