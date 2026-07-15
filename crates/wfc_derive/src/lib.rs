@@ -50,7 +50,7 @@ pub fn tiled(item: proc_macro::TokenStream) -> proc_macro::TokenStream {
 	};
 
 	let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap_or_else(|_| ".".to_string());
-	let path = path::PathBuf::from(manifest_dir).join(file_path);
+	let path = path::PathBuf::from(&manifest_dir).join(&file_path);
 	let data = fs::read_to_string(&path).unwrap();
 	let tile_map = serde_json::from_str::<tiled::TileMap>(&data).unwrap();
 
@@ -138,7 +138,11 @@ pub fn tiled(item: proc_macro::TokenStream) -> proc_macro::TokenStream {
 		};
 	}
 
+	let path = format!("{manifest_dir}/{file_path}");
+
 	quote! {
+		const _: &'static [u8] = include_bytes!(#path);
+
 		impl ::wfc::Tile for #ident {
 			fn weight(&self) -> u16 {
 				match self {
