@@ -12,6 +12,7 @@ impl Plugin for PlayerPlugin {
 		app.add_systems(Update, movement_player.run_if(in_state(GameState::InGame)));
 		app.add_systems(Update, camera_player.run_if(in_state(GameState::InGame)));
 		app.add_observer(on_network_message);
+		app.add_observer(config_camera);
 	}
 }
 
@@ -20,7 +21,7 @@ impl Plugin for PlayerPlugin {
 pub struct Player(pub steam::SteamId);
 
 #[derive(Debug, Component)]
-#[require(Transform, Camera3d, PlayerSpeed, CameraSensitivity)]
+#[require(Transform, PlayerSpeed, CameraSensitivity)]
 pub struct LocalPlayer;
 
 #[derive(Debug, Component, Reflect, Deref, DerefMut)]
@@ -29,6 +30,10 @@ struct CameraSensitivity(Vec2);
 
 #[derive(Debug, Component)]
 pub struct PlayerSpeed(f32);
+
+fn config_camera(event: On<Add, LocalPlayer>, mut commands: Commands) {
+	commands.entity(event.entity).insert((Camera3d::default(), AmbientLight { brightness: 0.025, ..Default::default() }));
+}
 
 fn on_network_message(event: On<networking::MessageReceive>, players: Query<(&mut Transform, &mut Player)>) {
 	match event.data {
