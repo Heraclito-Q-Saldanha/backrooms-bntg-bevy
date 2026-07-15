@@ -15,6 +15,7 @@ pub enum Tile {
 	DownRight = 4,
 	Horizontal = 5,
 	Vertical = 6,
+	EmptyWithLight = 7,
 }
 
 impl Plugin for GamePlugin {
@@ -52,7 +53,7 @@ fn despawn_players(event: On<steam::LobbyChatUpdate>, players: Query<(Entity, &p
 }
 
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>, mut meshes: ResMut<Assets<Mesh>>, mut materials: ResMut<Assets<StandardMaterial>>, steam: Res<steam::SteamClient>) {
-	let size = math::I64Vec2::new(160, 160);
+	let size = math::I64Vec2::new(64, 64);
 
 	#[cfg(debug_assertions)]
 	{
