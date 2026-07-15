@@ -10,6 +10,8 @@ pub mod waiting_players;
 
 use bevy::prelude::*;
 
+const AMBIENT_LIGHT: f32 = 0.0025;
+
 #[derive(States, Debug, Clone, Default, PartialEq, Eq, Hash)]
 pub enum GameState {
 	#[default]
@@ -37,6 +39,8 @@ fn main() {
 	app.add_plugins(networking::NetworkingPlugin);
 	app.add_plugins(bevy_skein::SkeinPlugin::default());
 	app.add_plugins(avian3d::PhysicsPlugins::default());
+
+	app.insert_resource(GlobalAmbientLight { brightness: AMBIENT_LIGHT, ..default() });
 
 	#[cfg(debug_assertions)]
 	{

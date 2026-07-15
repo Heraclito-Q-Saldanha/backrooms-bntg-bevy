@@ -6,7 +6,6 @@ use bevy::post_process;
 use bevy::prelude::*;
 
 const PITCH_LIMIT: f32 = std::f32::consts::FRAC_PI_2 - 0.01;
-const AMBIENT_LIGHT: f32 = 0.0025;
 
 pub struct PlayerPlugin;
 
@@ -37,10 +36,6 @@ pub struct PlayerSpeed(f32);
 fn config_camera(event: On<Add, LocalPlayer>, mut commands: Commands) {
 	commands.entity(event.entity).insert((
 		Camera3d::default(),
-		AmbientLight {
-			brightness: AMBIENT_LIGHT,
-			..Default::default()
-		},
 		core_pipeline::tonemapping::Tonemapping::TonyMcMapface,
 		post_process::bloom::Bloom { intensity: 0.5, ..Default::default() },
 	));
