@@ -74,12 +74,19 @@ fn main() {
 	#[cfg(debug_assertions)]
 	{
 		use bevy::dev_tools;
-		use bevy_inspector_egui::*;
-		app.add_plugins(bevy_egui::EguiPlugin::default());
-		app.add_plugins(quick::WorldInspectorPlugin::new());
+
 		app.add_plugins(avian3d::debug_render::PhysicsDebugPlugin::default());
 		app.add_plugins(dev_tools::infinite_grid::InfiniteGridPlugin);
 		app.add_plugins(dev_tools::fps_overlay::FpsOverlayPlugin::default());
+	}
+
+	#[cfg(feature = "inspector")]
+	{
+		//tem uma penalidade em performance
+
+		use bevy_inspector_egui::*;
+		app.add_plugins(bevy_egui::EguiPlugin::default());
+		app.add_plugins(quick::WorldInspectorPlugin::new());
 	}
 
 	app.init_state::<GameState>();

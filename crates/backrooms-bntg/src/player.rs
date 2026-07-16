@@ -51,7 +51,7 @@ fn config_local_player(event: On<Add, LocalPlayer>, mut commands: Commands) {
 		pbr::ScreenSpaceAmbientOcclusion::default(),
 		anti_alias::taa::TemporalAntiAliasing::default(),
 		Msaa::Off,
-		#[cfg(debug_assertions)]
+		#[cfg(feature = "inspector")]
 		{
 			bevy_inspector_egui::bevy_egui::PrimaryEguiContext
 		},
