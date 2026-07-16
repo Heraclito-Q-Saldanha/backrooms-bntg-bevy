@@ -8,9 +8,11 @@ pub mod steam;
 pub mod ui;
 pub mod waiting_players;
 
+use bevy::light;
 use bevy::prelude::*;
 
-const AMBIENT_LIGHT: f32 = 20.0;
+const AMBIENT_BRIGHTNESS: f32 = 20.0;
+const SHADOW_RESOLUTION: usize = 512;
 
 #[derive(States, Debug, Clone, Default, PartialEq, Eq, Hash)]
 pub enum GameState {
@@ -40,7 +42,8 @@ fn main() {
 	app.add_plugins(bevy_skein::SkeinPlugin::default());
 	app.add_plugins(avian3d::PhysicsPlugins::default());
 
-	app.insert_resource(GlobalAmbientLight { brightness: AMBIENT_LIGHT, ..default() });
+	app.insert_resource(GlobalAmbientLight { brightness: AMBIENT_BRIGHTNESS, ..default() });
+	app.insert_resource(light::DirectionalLightShadowMap { size: SHADOW_RESOLUTION });
 
 	#[cfg(debug_assertions)]
 	{

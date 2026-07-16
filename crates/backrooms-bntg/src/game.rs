@@ -3,9 +3,9 @@ use crate::*;
 use bevy::math;
 use bevy::prelude::*;
 
-const MAX_SHADOW_LIGHTS: usize = 42;
-const LIGHT_INTENSITY: f32 = 750000f32;
-const LIGHT_RANGE: f32 = 35f32;
+const MAX_SHADOW_LIGHTS: usize = 64;
+const LIGHT_INTENSITY: f32 = 750000.0;
+const LIGHT_RANGE: f32 = 35.0;
 
 pub struct GamePlugin;
 
@@ -120,12 +120,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>, mut meshes: Res
 				transform,
 			));
 		} else {
-			commands.spawn((
-				Mesh3d(meshes.add(Mesh::from(Capsule3d::default()))),
-				MeshMaterial3d(materials.add(Color::from(Srgba::BLUE))),
-				player::Player(member_id),
-				transform,
-			));
+			commands.spawn((Mesh3d(meshes.add(Mesh::from(Capsule3d::default()))), MeshMaterial3d(materials.add(Color::from(Srgba::BLUE))), player::Player(member_id), transform));
 		}
 	}
 
