@@ -75,7 +75,6 @@ fn main() {
 	{
 		use bevy::dev_tools;
 
-		app.add_plugins(avian3d::debug_render::PhysicsDebugPlugin::default());
 		app.add_plugins(dev_tools::infinite_grid::InfiniteGridPlugin);
 		app.add_plugins(dev_tools::fps_overlay::FpsOverlayPlugin::default());
 	}
@@ -87,6 +86,13 @@ fn main() {
 		use bevy_inspector_egui::*;
 		app.add_plugins(bevy_egui::EguiPlugin::default());
 		app.add_plugins(quick::WorldInspectorPlugin::new());
+	}
+
+	#[cfg(feature = "physics_debug")]
+	{
+		//tem uma penalidade em performance
+
+		app.add_plugins(avian3d::debug_render::PhysicsDebugPlugin::default());
 	}
 
 	app.init_state::<GameState>();

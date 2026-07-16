@@ -20,7 +20,6 @@ avian3d = { version = "0.7.0", default-features = false, features = [
     "collider-from-mesh",
     "bevy_scene",
     "bevy_picking",
-    "debug-plugin",
     "enhanced-determinism",
     "parallel",
     "serialize",
@@ -34,3 +33,4 @@ postcard = { version = "1", features = ["alloc"] }
 
 [features]
 inspector = ["dep:bevy-inspector-egui"]
+physics_debug = ["avian3d/debug-plugin"]
