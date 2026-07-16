@@ -15,8 +15,8 @@ pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
 	fn build(&self, app: &mut App) {
-		app.add_systems(Update, movement_player.run_if(in_state(GameState::InGame)));
-		app.add_systems(Update, camera_player.run_if(in_state(GameState::InGame)));
+		app.add_systems(Update, movement_player.run_if(in_state(GameState::InGame)).run_if(in_state(pause::IsPaused::Running)));
+		app.add_systems(Update, camera_player.run_if(in_state(GameState::InGame)).run_if(in_state(pause::IsPaused::Running)));
 		app.add_observer(on_network_message);
 		app.add_observer(config_camera);
 	}

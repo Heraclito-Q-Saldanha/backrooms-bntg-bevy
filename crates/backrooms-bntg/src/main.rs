@@ -2,6 +2,7 @@ pub mod create_lobby;
 pub mod game;
 pub mod main_menu;
 pub mod networking;
+pub mod pause;
 pub mod player;
 pub mod search_lobby;
 pub mod steam;
@@ -37,6 +38,7 @@ fn main() {
 	app.add_plugins(create_lobby::CreateLobbyPlugin);
 	app.add_plugins(waiting_players::WaitingPlayersPlugin);
 	app.add_plugins(game::GamePlugin);
+	app.add_plugins(pause::PauseMenuPlugin);
 	app.add_plugins(player::PlayerPlugin);
 	app.add_plugins(networking::NetworkingPlugin);
 	app.add_plugins(bevy_skein::SkeinPlugin::default());
