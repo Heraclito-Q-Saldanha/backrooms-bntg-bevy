@@ -10,6 +10,7 @@ use bevy::post_process;
 use bevy::prelude::*;
 
 const PITCH_LIMIT: f32 = std::f32::consts::FRAC_PI_2 - 0.01;
+const BLOOM_INTENSITY: f32 = 0.35;
 
 pub struct PlayerPlugin;
 
@@ -18,7 +19,8 @@ impl Plugin for PlayerPlugin {
 		app.add_systems(Update, movement_player.run_if(in_state(GameState::InGame)).run_if(in_state(ActiveMenu::None)));
 		app.add_systems(Update, camera_player.run_if(in_state(GameState::InGame)).run_if(in_state(ActiveMenu::None)));
 		app.add_observer(on_network_message);
-		app.add_observer(config_camera);
+		app.add_observer(config_local_player);
+		app.add_observer(config_player);
 	}
 }
 
@@ -37,21 +39,27 @@ struct CameraSensitivity(Vec2);
 #[derive(Debug, Component)]
 pub struct PlayerSpeed(f32);
 
-fn config_camera(event: On<Add, LocalPlayer>, mut commands: Commands) {
+fn config_local_player(event: On<Add, LocalPlayer>, mut commands: Commands) {
 	commands.entity(event.entity).insert((
 		Camera3d::default(),
 		camera::Hdr,
 		core_pipeline::tonemapping::Tonemapping::TonyMcMapface,
-		post_process::bloom::Bloom { intensity: 0.35, ..Default::default() },
+		post_process::bloom::Bloom {
+			intensity: BLOOM_INTENSITY,
+			..Default::default()
+		},
 		pbr::ScreenSpaceAmbientOcclusion::default(),
 		anti_alias::taa::TemporalAntiAliasing::default(),
 		Msaa::Off,
-		light::NotShadowCaster,
 		#[cfg(debug_assertions)]
 		{
 			bevy_inspector_egui::bevy_egui::PrimaryEguiContext
 		},
 	));
+}
+
+fn config_player(event: On<Add, Player>, mut commands: Commands) {
+	commands.entity(event.entity).insert((light::NotShadowCaster,));
 }
 
 fn on_network_message(event: On<networking::MessageReceive>, players: Query<(&mut Transform, &mut Player)>) {
