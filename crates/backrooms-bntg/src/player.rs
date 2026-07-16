@@ -1,5 +1,6 @@
 use crate::*;
 
+use avian3d::prelude::*;
 use bevy::anti_alias;
 use bevy::camera;
 use bevy::core_pipeline;
@@ -51,6 +52,11 @@ fn config_local_player(event: On<Add, LocalPlayer>, mut commands: Commands) {
 		pbr::ScreenSpaceAmbientOcclusion::default(),
 		anti_alias::taa::TemporalAntiAliasing::default(),
 		Msaa::Off,
+		RigidBody::Dynamic,
+		Collider::capsule(0.1, 0.5),
+		LinearVelocity::ZERO,
+		LockedAxes::ROTATION_LOCKED,
+		TransformInterpolation,
 		#[cfg(feature = "inspector")]
 		{
 			bevy_inspector_egui::bevy_egui::PrimaryEguiContext
@@ -78,25 +84,23 @@ fn on_network_message(event: On<networking::MessageReceive>, players: Query<(&mu
 	}
 }
 
-fn movement_player(query: Single<(&mut PlayerSpeed, &mut Transform), With<LocalPlayer>>, keys: Res<ButtonInput<KeyCode>>, time: Res<Time>, mut commands: Commands) {
-	let (speed, mut transform) = query.into_inner();
+fn movement_player(query: Single<(&PlayerSpeed, &Transform, &mut LinearVelocity), With<LocalPlayer>>, keys: Res<ButtonInput<KeyCode>>) {
+	let (speed, transform, mut velocity) = query.into_inner();
 
-	let delta = time.delta_secs();
-
-	let x = ((keys.pressed(KeyCode::KeyD) as i8) - (keys.pressed(KeyCode::KeyA) as i8)) as f32;
-	let z = ((keys.pressed(KeyCode::KeyS) as i8) - (keys.pressed(KeyCode::KeyW) as i8)) as f32;
+	let x = (keys.pressed(KeyCode::KeyD) as i8 - keys.pressed(KeyCode::KeyA) as i8) as f32;
+	let z = (keys.pressed(KeyCode::KeyS) as i8 - keys.pressed(KeyCode::KeyW) as i8) as f32;
 
 	let input = Vec3::new(x, 0.0, z);
 
 	if input.length_squared() > 0.0 {
 		let input = input.normalize();
 		let direction = transform.rotation * input;
-		transform.translation += direction * delta * speed.0;
 
-		commands.trigger(networking::BroadcastMessage {
-			send_flags: steam::SendFlags::NO_NAGLE | steam::SendFlags::UNRELIABLE,
-			data: networking::Message::Position(transform.translation),
-		});
+		velocity.x = (direction.x * speed.0) as f64;
+		velocity.z = (direction.z * speed.0) as f64;
+	} else {
+		velocity.x = 0.0;
+		velocity.z = 0.0;
 	}
 }
 
