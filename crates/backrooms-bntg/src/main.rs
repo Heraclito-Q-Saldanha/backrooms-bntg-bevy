@@ -50,6 +50,7 @@ fn main() {
 		app.add_plugins(quick::WorldInspectorPlugin::new());
 		app.add_plugins(avian3d::debug_render::PhysicsDebugPlugin::default());
 		app.add_plugins(dev_tools::infinite_grid::InfiniteGridPlugin);
+		app.add_plugins(dev_tools::fps_overlay::FpsOverlayPlugin::default());
 	}
 
 	app.init_state::<GameState>();
