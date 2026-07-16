@@ -11,6 +11,7 @@ pub mod waiting_players;
 
 use bevy::light;
 use bevy::prelude::*;
+use bevy::window;
 
 const AMBIENT_BRIGHTNESS: f32 = 20.0;
 const SHADOW_RESOLUTION: usize = 512;
@@ -29,10 +30,22 @@ fn main() {
 	let mut app = App::new();
 
 	app.add_plugins(steam::SteamPlugin);
-	app.add_plugins(DefaultPlugins.set(bevy::log::LogPlugin {
-		level: bevy::log::Level::INFO,
-		..Default::default()
-	}));
+	app.add_plugins(
+		DefaultPlugins
+			.set(bevy::log::LogPlugin {
+				level: bevy::log::Level::INFO,
+				..Default::default()
+			})
+			.set(WindowPlugin {
+				primary_window: Some(Window {
+					title: "backrooms bntg".into(),
+					present_mode: window::PresentMode::AutoNoVsync,
+					fit_canvas_to_parent: true,
+					..default()
+				}),
+				..default()
+			}),
+	);
 	app.add_plugins(main_menu::MainMenuPlugin);
 	app.add_plugins(search_lobby::SearchLobbyPlugin);
 	app.add_plugins(create_lobby::CreateLobbyPlugin);
