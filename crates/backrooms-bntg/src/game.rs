@@ -3,7 +3,15 @@ use crate::*;
 use bevy::math;
 use bevy::prelude::*;
 
+const MAX_SHADOW_LIGHTS: usize = 42;
+const LIGHT_INTENSITY: f32 = 750000f32;
+const LIGHT_RANGE: f32 = 35f32;
+
 pub struct GamePlugin;
+
+#[derive(Debug, Clone, Copy, Component, Reflect)]
+#[reflect(Component)]
+struct SpawnLight;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Component, wfc::Tiled, serde::Serialize, serde::Deserialize)]
 #[file = "assets/tiled/tiled.json"]
@@ -21,9 +29,44 @@ pub enum Tile {
 impl Plugin for GamePlugin {
 	fn build(&self, app: &mut App) {
 		app.add_systems(OnEnter(GameState::InGame), setup);
+		app.add_systems(Update, update_light_shadows.run_if(in_state(GameState::InGame)));
 		app.add_observer(despawn_players.run_if(in_state(GameState::InGame)));
-		app.add_observer(on_network_message);
+		app.add_observer(on_network_message.run_if(in_state(GameState::InGame)));
+		app.add_observer(spawn_lights.run_if(in_state(GameState::InGame)));
 	}
+}
+
+fn update_light_shadows(player: Single<&GlobalTransform, With<player::LocalPlayer>>, lights: Query<(&GlobalTransform, &mut SpotLight)>) {
+	let position = player.translation();
+
+	let mut lights: Vec<_> = lights.into_iter().map(|(transform, light)| (transform.translation().distance_squared(position), light)).collect();
+
+	lights.sort_by(|a, b| a.0.total_cmp(&b.0));
+
+	for (i, (_, mut light)) in lights.into_iter().enumerate() {
+		light.shadow_maps_enabled = i < MAX_SHADOW_LIGHTS;
+	}
+}
+
+fn spawn_lights(event: On<Add, SpawnLight>, transforms: Query<&Transform>, mut commands: Commands) {
+	let transform = transforms.get(event.entity).copied().unwrap_or_default();
+
+	commands.entity(event.entity).insert((
+		SpotLight {
+			intensity: LIGHT_INTENSITY,
+			range: LIGHT_RANGE,
+			inner_angle: 1.2f32,
+			outer_angle: 1.50f32,
+			contact_shadows_enabled: false,
+			shadow_maps_enabled: false,
+			..Default::default()
+		},
+		Transform {
+			translation: transform.translation,
+			scale: transform.scale,
+			rotation: Quat::from_rotation_x(-std::f32::consts::FRAC_PI_2),
+		},
+	));
 }
 
 fn on_network_message(event: On<networking::MessageReceive>, asset_server: Res<AssetServer>, mut commands: Commands) {

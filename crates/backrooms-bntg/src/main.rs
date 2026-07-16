@@ -10,7 +10,7 @@ pub mod waiting_players;
 
 use bevy::prelude::*;
 
-const AMBIENT_LIGHT: f32 = 0.00025;
+const AMBIENT_LIGHT: f32 = 20.0;
 
 #[derive(States, Debug, Clone, Default, PartialEq, Eq, Hash)]
 pub enum GameState {
