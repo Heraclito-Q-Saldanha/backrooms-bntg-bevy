@@ -6,26 +6,20 @@ use bevy::window::{CursorGrabMode, CursorOptions};
 
 pub struct PauseMenuPlugin;
 
-#[derive(Debug, Default, SubStates, PartialEq, Eq, Hash, Clone, Copy)]
-#[source(GameState = GameState::InGame)]
-pub enum IsPaused {
-	#[default]
-	Running,
-	Paused,
-}
-
 impl Plugin for PauseMenuPlugin {
 	fn build(&self, app: &mut App) {
-		app.add_sub_state::<IsPaused>();
-		app.add_systems(OnEnter(IsPaused::Paused), (scene.spawn(), ungrab).chain());
-		app.add_systems(OnEnter(IsPaused::Running), grab);
+		app.add_systems(OnEnter(ActiveMenu::Pause), scene.spawn());
+		// Cursor is managed here for all menus: grabbed when no menu is open,
+		// released whenever any menu opens.
+		app.add_systems(OnEnter(ActiveMenu::None), grab);
+		app.add_systems(OnExit(ActiveMenu::None), ungrab);
 		app.add_systems(Update, escape_handler.run_if(in_state(GameState::InGame)));
 	}
 }
 
 fn scene() -> impl Scene {
 	bsn! {
-		DespawnOnExit::<IsPaused>(IsPaused::Paused)
+		DespawnOnExit::<ActiveMenu>(ActiveMenu::Pause)
 		Node {
 			width: percent(100),
 			height: percent(100),
@@ -90,8 +84,8 @@ fn scene() -> impl Scene {
 	}
 }
 
-fn on_button_continue_system(_: On<Pointer<Press>>, mut paused: ResMut<NextState<IsPaused>>) {
-	paused.set(IsPaused::Running);
+fn on_button_continue_system(_: On<Pointer<Press>>, mut menu: ResMut<NextState<ActiveMenu>>) {
+	menu.set(ActiveMenu::None);
 }
 
 fn on_button_exit_system(_: On<Pointer<Press>>, mut game_state: ResMut<NextState<GameState>>) {
@@ -108,11 +102,12 @@ fn ungrab(mut cursor: Single<&mut CursorOptions>) {
 	cursor.grab_mode = CursorGrabMode::None;
 }
 
-fn escape_handler(mut set_paused: ResMut<NextState<IsPaused>>, paused: Res<State<IsPaused>>, key: Res<ButtonInput<KeyCode>>) {
+fn escape_handler(mut menu: ResMut<NextState<ActiveMenu>>, current: Res<State<ActiveMenu>>, key: Res<ButtonInput<KeyCode>>) {
 	if key.just_pressed(KeyCode::Escape) {
-		match paused.get() {
-			IsPaused::Paused => set_paused.set(IsPaused::Running),
-			IsPaused::Running => set_paused.set(IsPaused::Paused),
+		match current.get() {
+			ActiveMenu::None => menu.set(ActiveMenu::Pause),
+			ActiveMenu::Pause => menu.set(ActiveMenu::None),
+			_ => {} // Other menus handle their own ESC
 		}
 	}
 }

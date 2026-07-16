@@ -4,6 +4,7 @@ pub mod main_menu;
 pub mod networking;
 pub mod pause;
 pub mod player;
+pub mod player_menu;
 pub mod search_lobby;
 pub mod steam;
 pub mod ui;
@@ -24,6 +25,17 @@ pub enum GameState {
 	CreatingLobby,
 	WaitingForPlayers,
 	InGame,
+}
+
+/// Tracks which menu overlay is currently open. At most one is open at a time.
+/// Add new variants here when introducing new menus.
+#[derive(SubStates, Debug, Clone, Default, PartialEq, Eq, Hash)]
+#[source(GameState = GameState::InGame)]
+pub enum ActiveMenu {
+	#[default]
+	None,
+	Pause,
+	PlayerMenu,
 }
 
 fn main() {
@@ -53,6 +65,7 @@ fn main() {
 	app.add_plugins(game::GamePlugin);
 	app.add_plugins(pause::PauseMenuPlugin);
 	app.add_plugins(player::PlayerPlugin);
+	app.add_plugins(player_menu::PlayerMenuPlugin);
 	app.add_plugins(networking::NetworkingPlugin);
 	app.add_plugins(bevy_skein::SkeinPlugin::default());
 	app.add_plugins(avian3d::PhysicsPlugins::default());
@@ -72,6 +85,7 @@ fn main() {
 	}
 
 	app.init_state::<GameState>();
+	app.add_sub_state::<ActiveMenu>();
 
 	app.run();
 }
