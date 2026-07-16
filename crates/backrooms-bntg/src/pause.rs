@@ -9,8 +9,6 @@ pub struct PauseMenuPlugin;
 impl Plugin for PauseMenuPlugin {
 	fn build(&self, app: &mut App) {
 		app.add_systems(OnEnter(ActiveMenu::Pause), scene.spawn());
-		// Cursor is managed here for all menus: grabbed when no menu is open,
-		// released whenever any menu opens.
 		app.add_systems(OnEnter(ActiveMenu::None), grab);
 		app.add_systems(OnExit(ActiveMenu::None), ungrab);
 		app.add_systems(Update, escape_handler.run_if(in_state(GameState::InGame)));
@@ -107,7 +105,7 @@ fn escape_handler(mut menu: ResMut<NextState<ActiveMenu>>, current: Res<State<Ac
 		match current.get() {
 			ActiveMenu::None => menu.set(ActiveMenu::Pause),
 			ActiveMenu::Pause => menu.set(ActiveMenu::None),
-			_ => {} // Other menus handle their own ESC
+			_ => {}
 		}
 	}
 }

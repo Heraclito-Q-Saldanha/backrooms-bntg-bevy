@@ -27,8 +27,6 @@ pub enum GameState {
 	InGame,
 }
 
-/// Tracks which menu overlay is currently open. At most one is open at a time.
-/// Add new variants here when introducing new menus.
 #[derive(SubStates, Debug, Clone, Default, PartialEq, Eq, Hash)]
 #[source(GameState = GameState::InGame)]
 pub enum ActiveMenu {
