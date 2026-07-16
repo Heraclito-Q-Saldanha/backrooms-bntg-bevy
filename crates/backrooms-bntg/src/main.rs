@@ -14,7 +14,7 @@ use bevy::light;
 use bevy::prelude::*;
 use bevy::window;
 
-const AMBIENT_BRIGHTNESS: f32 = 20.0;
+const AMBIENT_BRIGHTNESS: f32 = 15.0;
 const SHADOW_RESOLUTION: usize = 512;
 
 #[derive(States, Debug, Clone, Default, PartialEq, Eq, Hash)]

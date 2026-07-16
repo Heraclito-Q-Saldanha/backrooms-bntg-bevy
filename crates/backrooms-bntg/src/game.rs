@@ -1,11 +1,12 @@
 use crate::*;
 
+use bevy::camera;
 use bevy::math;
 use bevy::prelude::*;
 
-const MAX_SHADOW_LIGHTS: usize = 64;
+const MAX_SHADOW_LIGHTS: usize = 24;
 const LIGHT_INTENSITY: f32 = 750000.0;
-const LIGHT_RANGE: f32 = 35.0;
+const LIGHT_RANGE: f32 = 45.0;
 
 pub struct GamePlugin;
 
@@ -65,6 +66,11 @@ fn spawn_lights(event: On<Add, SpawnLight>, transforms: Query<&Transform>, mut c
 			translation: transform.translation,
 			scale: transform.scale,
 			rotation: Quat::from_rotation_x(-std::f32::consts::FRAC_PI_2),
+		},
+		camera::visibility::VisibilityRange {
+			start_margin: 0.0..0.0,
+			end_margin: 20.0..25.0,
+			use_aabb: false,
 		},
 	));
 }
@@ -150,6 +156,7 @@ fn spawn_map(map: &wfc::map::Map2D<Tile>, asset_server: Res<AssetServer>, comman
 		for y in 0..size.y {
 			let tile = map.get_tile(math::i64vec2(x, y)).unwrap();
 			let id = tile as usize;
+
 			commands.spawn((
 				DespawnOnExit(GameState::InGame),
 				WorldAssetRoot(asset_server.load(GltfAssetLabel::Scene(id).from_asset("level_0.glb"))),
