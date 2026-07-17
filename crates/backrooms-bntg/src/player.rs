@@ -41,12 +41,12 @@ pub struct PlayerSpeed(f32);
 fn config_local_player(event: On<Add, LocalPlayer>, mut commands: Commands) {
 	commands.entity(event.entity).insert((
 		RigidBody::Dynamic,
-		Collider::capsule(0.1, 0.4),
+		Collider::capsule(0.2, 1.0),
 		LinearVelocity::ZERO,
 		LockedAxes::ROTATION_LOCKED,
 		TransformInterpolation,
 		children![(
-			Transform::from_translation(Vec3::Y - 0.2),
+			Transform::from_translation(Vec3::Y * 0.3),
 			Camera3d::default(),
 			camera::Hdr,
 			core_pipeline::tonemapping::Tonemapping::TonyMcMapface,
