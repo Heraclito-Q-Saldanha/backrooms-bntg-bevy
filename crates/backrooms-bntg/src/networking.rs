@@ -5,11 +5,10 @@ use bevy::prelude::*;
 pub struct NetworkingPlugin;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-
 pub enum Message {
 	StartGame,
-	Position(Vec3),
-	Map(wfc::map::Map2D<game::Tile>),
+	PlayerPosition(Vec3),
+	MapGenerated(wfc::map::Map2D<game::Tile>),
 }
 
 #[derive(Debug, Clone, Event)]

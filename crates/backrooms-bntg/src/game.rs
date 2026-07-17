@@ -75,48 +75,6 @@ fn spawn_lights(event: On<Add, SpawnLight>, transforms: Query<&Transform>, mut c
 	));
 }
 
-fn on_network_message(event: On<networking::MessageReceive>, asset_server: Res<AssetServer>, mut meshes: ResMut<Assets<Mesh>>, mut materials: ResMut<Assets<StandardMaterial>>, mut commands: Commands, steam: Res<steam::SteamClient>) {
-	match &event.data {
-		networking::Message::Map(map) => {
-			let size = map.size();
-			let lobby_id = steam.current_lobby().unwrap();
-			let member_ids = steam.lobby_members(lobby_id);
-			let my_id = steam.steam_id();
-			let position = find_spawn(map).unwrap();
-
-			for x in 0..size.x {
-				for y in 0..size.y {
-					let tile = map.get_tile(math::i64vec2(x, y)).unwrap();
-					let id = tile as usize;
-
-					commands.spawn((
-						DespawnOnExit(GameState::InGame),
-						WorldAssetRoot(asset_server.load(GltfAssetLabel::Scene(id).from_asset("models/level_0.glb"))),
-						Transform::from_xyz(x as f32 * 2.0, 0f32, y as f32 * 2.0),
-						tile,
-					));
-				}
-			}
-
-			for member_id in member_ids {
-				let transform = Transform::from_xyz((position.x * 2) as f32, 2f32, (position.y * 2) as f32);
-				if my_id == member_id {
-					commands.spawn((
-						Mesh3d(meshes.add(Mesh::from(Capsule3d::default()))),
-						MeshMaterial3d(materials.add(Color::from(Srgba::WHITE))),
-						player::Player(member_id),
-						player::LocalPlayer,
-						transform,
-					));
-				} else {
-					commands.spawn((Mesh3d(meshes.add(Mesh::from(Capsule3d::default()))), MeshMaterial3d(materials.add(Color::from(Srgba::BLUE))), player::Player(member_id), transform));
-				}
-			}
-		}
-		_ => {}
-	}
-}
-
 fn despawn_players(event: On<steam::LobbyChatUpdate>, players: Query<(Entity, &player::Player)>, mut commands: Commands) {
 	match event.0.member_state_change {
 		steam::ChatMemberStateChange::Left | steamworks::ChatMemberStateChange::Disconnected | steamworks::ChatMemberStateChange::Banned | steamworks::ChatMemberStateChange::Kicked => {
@@ -134,7 +92,7 @@ fn despawn_players(event: On<steam::LobbyChatUpdate>, players: Query<(Entity, &p
 	}
 }
 
-fn setup(mut commands: Commands, asset_server: Res<AssetServer>, mut meshes: ResMut<Assets<Mesh>>, mut materials: ResMut<Assets<StandardMaterial>>, steam: Res<steam::SteamClient>) {
+fn setup(mut commands: Commands, asset_server: Res<AssetServer>, steam: Res<steam::SteamClient>) {
 	let size = math::I64Vec2::new(64, 64);
 
 	#[cfg(debug_assertions)]
@@ -181,22 +139,52 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>, mut meshes: Res
 	for member_id in member_ids {
 		let transform = Transform::from_xyz((position.x * 2) as f32, 2f32, (position.y * 2) as f32);
 		if my_id == member_id {
-			commands.spawn((
-				Mesh3d(meshes.add(Mesh::from(Capsule3d::default()))),
-				MeshMaterial3d(materials.add(Color::from(Srgba::WHITE))),
-				player::Player(member_id),
-				player::LocalPlayer,
-				transform,
-			));
+			commands.spawn((player::Player(member_id), player::LocalPlayer, transform));
 		} else {
-			commands.spawn((Mesh3d(meshes.add(Mesh::from(Capsule3d::default()))), MeshMaterial3d(materials.add(Color::from(Srgba::BLUE))), player::Player(member_id), transform));
+			commands.spawn((player::Player(member_id), transform));
 		}
 	}
 
 	commands.trigger(networking::BroadcastMessage {
 		send_flags: steam::SendFlags::RELIABLE,
-		data: networking::Message::Map(map),
+		data: networking::Message::MapGenerated(map),
 	});
+}
+
+fn on_network_message(event: On<networking::MessageReceive>, asset_server: Res<AssetServer>, mut commands: Commands, steam: Res<steam::SteamClient>) {
+	match &event.data {
+		networking::Message::MapGenerated(map) => {
+			let size = map.size();
+			let lobby_id = steam.current_lobby().unwrap();
+			let member_ids = steam.lobby_members(lobby_id);
+			let my_id = steam.steam_id();
+			let position = find_spawn(map).unwrap();
+
+			for x in 0..size.x {
+				for y in 0..size.y {
+					let tile = map.get_tile(math::i64vec2(x, y)).unwrap();
+					let id = tile as usize;
+
+					commands.spawn((
+						DespawnOnExit(GameState::InGame),
+						WorldAssetRoot(asset_server.load(GltfAssetLabel::Scene(id).from_asset("models/level_0.glb"))),
+						Transform::from_xyz(x as f32 * 2.0, 0f32, y as f32 * 2.0),
+						tile,
+					));
+				}
+			}
+
+			for member_id in member_ids {
+				let transform = Transform::from_xyz((position.x * 2) as f32, 2f32, (position.y * 2) as f32);
+				if my_id == member_id {
+					commands.spawn((player::Player(member_id), player::LocalPlayer, transform));
+				} else {
+					commands.spawn((player::Player(member_id), transform));
+				}
+			}
+		}
+		_ => {}
+	}
 }
 
 fn find_spawn(map: &wfc::map::Map2D<Tile>) -> Option<math::I64Vec2> {

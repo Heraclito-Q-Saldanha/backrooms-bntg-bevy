@@ -65,24 +65,10 @@ fn config_local_player(event: On<Add, LocalPlayer>, mut commands: Commands) {
 	));
 }
 
-fn config_player(event: On<Add, Player>, mut commands: Commands) {
-	commands.entity(event.entity).insert((light::NotShadowCaster,));
-}
-
-fn on_network_message(event: On<networking::MessageReceive>, players: Query<(&mut Transform, &mut Player)>) {
-	match event.data {
-		networking::Message::Position(position) => {
-			let steam_id = event.steam_id;
-
-			for (mut transform, player) in players {
-				if player.0 != steam_id {
-					continue;
-				}
-				transform.translation = position;
-			}
-		}
-		_ => {}
-	}
+fn config_player(event: On<Add, Player>, mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut materials: ResMut<Assets<StandardMaterial>>) {
+	commands
+		.entity(event.entity)
+		.insert((light::NotShadowCaster, Mesh3d(meshes.add(Mesh::from(Capsule3d::default()))), MeshMaterial3d(materials.add(Color::from(Srgba::BLUE)))));
 }
 
 fn movement_player(query: Single<(&PlayerSpeed, &Transform, &mut LinearVelocity), With<LocalPlayer>>, keys: Res<ButtonInput<KeyCode>>) {
@@ -125,6 +111,22 @@ fn camera_player(accumulated_mouse_motion: Res<input::mouse::AccumulatedMouseMot
 
 	player.rotation = Quat::from_rotation_y(yaw + delta_yaw);
 	camera.rotation = Quat::from_rotation_x(pitch);
+}
+
+fn on_network_message(event: On<networking::MessageReceive>, players: Query<(&mut Transform, &mut Player)>) {
+	match event.data {
+		networking::Message::PlayerPosition(position) => {
+			let steam_id = event.steam_id;
+
+			for (mut transform, player) in players {
+				if player.0 != steam_id {
+					continue;
+				}
+				transform.translation = position;
+			}
+		}
+		_ => {}
+	}
 }
 
 impl Default for PlayerSpeed {
