@@ -110,8 +110,10 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>, steam: Res<stea
 		return;
 	}
 
+	let mut seed = rand::random();
+
 	let map = loop {
-		let seed = rand::random();
+		seed += 1;
 		match wfc::map::Map2D::<Tile>::generate(size, seed) {
 			Ok(value) => break value,
 			Err(_) => continue,
