@@ -118,8 +118,6 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>, steam: Res<stea
 		}
 	};
 
-	let size = map.size();
-
 	for x in 0..size.x {
 		for y in 0..size.y {
 			let tile = map.get_tile(math::i64vec2(x, y)).unwrap();
