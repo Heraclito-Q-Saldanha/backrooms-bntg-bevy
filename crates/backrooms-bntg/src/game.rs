@@ -69,7 +69,7 @@ fn spawn_lights(event: On<Add, SpawnLight>, transforms: Query<&Transform>, mut c
 		},
 		camera::visibility::VisibilityRange {
 			start_margin: 0.0..0.0,
-			end_margin: 20.0..25.0,
+			end_margin: 34.0..36.0,
 			use_aabb: false,
 		},
 	));
