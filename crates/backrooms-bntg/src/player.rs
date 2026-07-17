@@ -71,8 +71,9 @@ fn config_player(event: On<Add, Player>, mut commands: Commands, mut meshes: Res
 		.insert((light::NotShadowCaster, Mesh3d(meshes.add(Mesh::from(Capsule3d::default()))), MeshMaterial3d(materials.add(Color::from(Srgba::BLUE)))));
 }
 
-fn movement_player(query: Single<(&PlayerSpeed, &Transform, &mut LinearVelocity), With<LocalPlayer>>, keys: Res<ButtonInput<KeyCode>>) {
-	let (speed, transform, mut velocity) = query.into_inner();
+fn movement_player(query: Single<(&PlayerSpeed, &mut LinearVelocity), With<LocalPlayer>>, camera: Single<&Transform, (With<Camera3d>, Without<LocalPlayer>)>, keys: Res<ButtonInput<KeyCode>>) {
+	let (speed, mut velocity) = query.into_inner();
+	let camera = camera.into_inner();
 
 	let x = (keys.pressed(KeyCode::KeyD) as i8 - keys.pressed(KeyCode::KeyA) as i8) as f32;
 	let z = (keys.pressed(KeyCode::KeyS) as i8 - keys.pressed(KeyCode::KeyW) as i8) as f32;
@@ -81,7 +82,9 @@ fn movement_player(query: Single<(&PlayerSpeed, &Transform, &mut LinearVelocity)
 
 	if input.length_squared() > 0.0 {
 		let input = input.normalize();
-		let direction = transform.rotation * input;
+
+		let (yaw, _, _) = camera.rotation.to_euler(EulerRot::YXZ);
+		let direction = Quat::from_rotation_y(yaw) * input;
 
 		velocity.x = (direction.x * speed.0) as f64;
 		velocity.z = (direction.z * speed.0) as f64;
@@ -91,7 +94,7 @@ fn movement_player(query: Single<(&PlayerSpeed, &Transform, &mut LinearVelocity)
 	}
 }
 
-fn camera_player(accumulated_mouse_motion: Res<input::mouse::AccumulatedMouseMotion>, camera: Single<&mut Transform, (With<Camera3d>, Without<LocalPlayer>)>, player: Single<&mut Transform, With<LocalPlayer>>) {
+fn camera_player(accumulated_mouse_motion: Res<input::mouse::AccumulatedMouseMotion>, camera: Single<&mut Transform, With<Camera3d>>) {
 	let delta = accumulated_mouse_motion.delta;
 
 	if delta == Vec2::ZERO {
@@ -101,16 +104,14 @@ fn camera_player(accumulated_mouse_motion: Res<input::mouse::AccumulatedMouseMot
 	let delta_yaw = -delta.x * CAMERA_SENSITIVITY.x;
 	let delta_pitch = -delta.y * CAMERA_SENSITIVITY.y;
 
-	let mut player = player.into_inner();
 	let mut camera = camera.into_inner();
 
-	let (yaw, _, _) = player.rotation.to_euler(EulerRot::YXZ);
-	let (_, pitch, _) = camera.rotation.to_euler(EulerRot::YXZ);
+	let (mut yaw, mut pitch, _) = camera.rotation.to_euler(EulerRot::YXZ);
 
-	let pitch = (pitch + delta_pitch).clamp(-PITCH_LIMIT, PITCH_LIMIT);
+	pitch = (pitch + delta_pitch).clamp(-PITCH_LIMIT, PITCH_LIMIT);
+	yaw += delta_yaw;
 
-	player.rotation = Quat::from_rotation_y(yaw + delta_yaw);
-	camera.rotation = Quat::from_rotation_x(pitch);
+	camera.rotation = Quat::from_euler(EulerRot::YXZ, yaw, pitch, 0.0);
 }
 
 fn on_network_message(event: On<networking::MessageReceive>, players: Query<(&mut Transform, &mut Player)>) {
