@@ -13,6 +13,8 @@ use bevy::prelude::*;
 const PITCH_LIMIT: f32 = std::f32::consts::FRAC_PI_2 - 0.01;
 const BLOOM_INTENSITY: f32 = 0.35;
 
+const CAMERA_SENSITIVITY: Vec2 = Vec2 { x: 0.003, y: 0.002 };
+
 pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
@@ -30,33 +32,31 @@ impl Plugin for PlayerPlugin {
 pub struct Player(pub steam::SteamId);
 
 #[derive(Debug, Component)]
-#[require(Transform, PlayerSpeed, CameraSensitivity)]
+#[require(Transform, PlayerSpeed)]
 pub struct LocalPlayer;
-
-#[derive(Debug, Component, Reflect, Deref, DerefMut)]
-#[reflect(Component)]
-struct CameraSensitivity(Vec2);
 
 #[derive(Debug, Component)]
 pub struct PlayerSpeed(f32);
 
 fn config_local_player(event: On<Add, LocalPlayer>, mut commands: Commands) {
 	commands.entity(event.entity).insert((
-		Camera3d::default(),
-		camera::Hdr,
-		core_pipeline::tonemapping::Tonemapping::TonyMcMapface,
-		post_process::bloom::Bloom {
-			intensity: BLOOM_INTENSITY,
-			..Default::default()
-		},
-		pbr::ScreenSpaceAmbientOcclusion::default(),
-		anti_alias::taa::TemporalAntiAliasing::default(),
-		Msaa::Off,
 		RigidBody::Dynamic,
 		Collider::capsule(0.1, 0.5),
 		LinearVelocity::ZERO,
 		LockedAxes::ROTATION_LOCKED,
 		TransformInterpolation,
+		children![(
+			Camera3d::default(),
+			camera::Hdr,
+			core_pipeline::tonemapping::Tonemapping::TonyMcMapface,
+			post_process::bloom::Bloom {
+				intensity: BLOOM_INTENSITY,
+				..Default::default()
+			},
+			pbr::ScreenSpaceAmbientOcclusion::default(),
+			anti_alias::taa::TemporalAntiAliasing::default(),
+			Msaa::Off,
+		)],
 		#[cfg(feature = "inspector")]
 		{
 			bevy_inspector_egui::bevy_egui::PrimaryEguiContext
@@ -104,29 +104,26 @@ fn movement_player(query: Single<(&PlayerSpeed, &Transform, &mut LinearVelocity)
 	}
 }
 
-fn camera_player(accumulated_mouse_motion: Res<input::mouse::AccumulatedMouseMotion>, player: Single<(&mut Transform, &CameraSensitivity), With<LocalPlayer>>) {
-	let (mut transform, camera_sensitivity) = player.into_inner();
-
+fn camera_player(accumulated_mouse_motion: Res<input::mouse::AccumulatedMouseMotion>, camera: Single<&mut Transform, (With<Camera3d>, Without<LocalPlayer>)>, player: Single<&mut Transform, With<LocalPlayer>>) {
 	let delta = accumulated_mouse_motion.delta;
 
-	if delta != Vec2::ZERO {
-		let delta_yaw = -delta.x * camera_sensitivity.x;
-		let delta_pitch = -delta.y * camera_sensitivity.y;
-
-		let (yaw, pitch, roll) = transform.rotation.to_euler(EulerRot::YXZ);
-		let yaw = yaw + delta_yaw;
-
-		let pitch = (pitch + delta_pitch).clamp(-PITCH_LIMIT, PITCH_LIMIT);
-
-		transform.rotation = Quat::from_euler(EulerRot::YXZ, yaw, pitch, roll);
+	if delta == Vec2::ZERO {
+		return;
 	}
-}
 
-impl Default for CameraSensitivity {
-	#[inline]
-	fn default() -> Self {
-		Self(Vec2::new(0.003, 0.002))
-	}
+	let delta_yaw = -delta.x * CAMERA_SENSITIVITY.x;
+	let delta_pitch = -delta.y * CAMERA_SENSITIVITY.y;
+
+	let mut player = player.into_inner();
+	let mut camera = camera.into_inner();
+
+	let (yaw, _, _) = player.rotation.to_euler(EulerRot::YXZ);
+	let (_, pitch, _) = camera.rotation.to_euler(EulerRot::YXZ);
+
+	let pitch = (pitch + delta_pitch).clamp(-PITCH_LIMIT, PITCH_LIMIT);
+
+	player.rotation = Quat::from_rotation_y(yaw + delta_yaw);
+	camera.rotation = Quat::from_rotation_x(pitch);
 }
 
 impl Default for PlayerSpeed {
