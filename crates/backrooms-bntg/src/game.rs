@@ -10,6 +10,7 @@ const MAX_SHADOW_LIGHTS: usize = 24;
 const LIGHT_INTENSITY: f32 = 750000.0;
 const LIGHT_RANGE: f32 = 45.0;
 const ALMOND_WATER_SPAWN_RATE: f32 = 10.0 / 100.0;
+const ITEM_SPAWN_HEIGHT: f32 = 1.0;
 
 pub struct GamePlugin;
 
@@ -183,7 +184,7 @@ fn on_network_message(
 							ItemTile(position),
 							DespawnOnExit(GameState::InGame),
 							WorldAssetRoot(asset_server.load(GltfAssetLabel::Scene(0).from_asset("models/almond_water.glb"))),
-							Transform::from_xyz(x as f32 * 2.0, 1.5, y as f32 * 2.0),
+							Transform::from_xyz(x as f32 * 2.0, ITEM_SPAWN_HEIGHT, y as f32 * 2.0),
 							Collider::sphere(0.3),
 							Sensor,
 							CollisionLayers::new([GameLayer::Interactable], [GameLayer::Interactable]),
@@ -317,7 +318,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>, mut meshes: Res
 					ItemTile(position),
 					DespawnOnExit(GameState::InGame),
 					WorldAssetRoot(asset_server.load(GltfAssetLabel::Scene(0).from_asset("models/almond_water.glb"))),
-					Transform::from_xyz(x as f32 * 2.0, 0.35, y as f32 * 2.0),
+					Transform::from_xyz(x as f32 * 2.0, ITEM_SPAWN_HEIGHT, y as f32 * 2.0),
 					Collider::sphere(0.3),
 					Sensor,
 					CollisionLayers::new([GameLayer::Interactable], [GameLayer::Interactable]),
