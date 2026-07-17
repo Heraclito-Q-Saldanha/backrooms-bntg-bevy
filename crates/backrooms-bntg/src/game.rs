@@ -6,7 +6,7 @@ use bevy::prelude::*;
 
 const MAX_SHADOW_LIGHTS: usize = 24;
 const LIGHT_INTENSITY: f32 = 750000.0;
-const LIGHT_RANGE: f32 = 45.0;
+const LIGHT_RANGE: f32 = 10.0;
 
 pub struct GamePlugin;
 
