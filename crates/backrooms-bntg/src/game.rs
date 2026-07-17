@@ -75,10 +75,43 @@ fn spawn_lights(event: On<Add, SpawnLight>, transforms: Query<&Transform>, mut c
 	));
 }
 
-fn on_network_message(event: On<networking::MessageReceive>, asset_server: Res<AssetServer>, mut commands: Commands) {
+fn on_network_message(event: On<networking::MessageReceive>, asset_server: Res<AssetServer>, mut meshes: ResMut<Assets<Mesh>>, mut materials: ResMut<Assets<StandardMaterial>>, mut commands: Commands, steam: Res<steam::SteamClient>) {
 	match &event.data {
 		networking::Message::Map(map) => {
-			spawn_map(map, asset_server, &mut commands);
+			let size = map.size();
+			let lobby_id = steam.current_lobby().unwrap();
+			let member_ids = steam.lobby_members(lobby_id);
+			let my_id = steam.steam_id();
+			let position = find_spawn(map).unwrap();
+
+			for x in 0..size.x {
+				for y in 0..size.y {
+					let tile = map.get_tile(math::i64vec2(x, y)).unwrap();
+					let id = tile as usize;
+
+					commands.spawn((
+						DespawnOnExit(GameState::InGame),
+						WorldAssetRoot(asset_server.load(GltfAssetLabel::Scene(id).from_asset("level_0.glb"))),
+						Transform::from_xyz(x as f32 * 2.0, 0f32, y as f32 * 2.0),
+						tile,
+					));
+				}
+			}
+
+			for member_id in member_ids {
+				let transform = Transform::from_xyz((position.x * 2) as f32, 2f32, (position.y * 2) as f32);
+				if my_id == member_id {
+					commands.spawn((
+						Mesh3d(meshes.add(Mesh::from(Capsule3d::default()))),
+						MeshMaterial3d(materials.add(Color::from(Srgba::WHITE))),
+						player::Player(member_id),
+						player::LocalPlayer,
+						transform,
+					));
+				} else {
+					commands.spawn((Mesh3d(meshes.add(Mesh::from(Capsule3d::default()))), MeshMaterial3d(materials.add(Color::from(Srgba::BLUE))), player::Player(member_id), transform));
+				}
+			}
 		}
 		_ => {}
 	}
@@ -115,21 +148,6 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>, mut meshes: Res
 	let owner_id = steam.lobby_owner(lobby_id);
 	let my_id = steam.steam_id();
 
-	for member_id in member_ids {
-		let transform = Transform::from_xyz(size.x as f32, 2f32, size.y as f32);
-		if my_id == member_id {
-			commands.spawn((
-				Mesh3d(meshes.add(Mesh::from(Capsule3d::default()))),
-				MeshMaterial3d(materials.add(Color::from(Srgba::WHITE))),
-				player::Player(member_id),
-				player::LocalPlayer,
-				transform,
-			));
-		} else {
-			commands.spawn((Mesh3d(meshes.add(Mesh::from(Capsule3d::default()))), MeshMaterial3d(materials.add(Color::from(Srgba::BLUE))), player::Player(member_id), transform));
-		}
-	}
-
 	if owner_id != my_id {
 		return;
 	}
@@ -142,16 +160,8 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>, mut meshes: Res
 		}
 	};
 
-	spawn_map(&map, asset_server, &mut commands);
-
-	commands.trigger(networking::BroadcastMessage {
-		send_flags: steam::SendFlags::RELIABLE,
-		data: networking::Message::Map(map),
-	});
-}
-
-fn spawn_map(map: &wfc::map::Map2D<Tile>, asset_server: Res<AssetServer>, commands: &mut Commands) {
 	let size = map.size();
+
 	for x in 0..size.x {
 		for y in 0..size.y {
 			let tile = map.get_tile(math::i64vec2(x, y)).unwrap();
@@ -165,4 +175,71 @@ fn spawn_map(map: &wfc::map::Map2D<Tile>, asset_server: Res<AssetServer>, comman
 			));
 		}
 	}
+
+	let position = find_spawn(&map).unwrap();
+
+	for member_id in member_ids {
+		let transform = Transform::from_xyz((position.x * 2) as f32, 2f32, (position.y * 2) as f32);
+		if my_id == member_id {
+			commands.spawn((
+				Mesh3d(meshes.add(Mesh::from(Capsule3d::default()))),
+				MeshMaterial3d(materials.add(Color::from(Srgba::WHITE))),
+				player::Player(member_id),
+				player::LocalPlayer,
+				transform,
+			));
+		} else {
+			commands.spawn((Mesh3d(meshes.add(Mesh::from(Capsule3d::default()))), MeshMaterial3d(materials.add(Color::from(Srgba::BLUE))), player::Player(member_id), transform));
+		}
+	}
+
+	commands.trigger(networking::BroadcastMessage {
+		send_flags: steam::SendFlags::RELIABLE,
+		data: networking::Message::Map(map),
+	});
+}
+
+fn find_spawn(map: &wfc::map::Map2D<Tile>) -> Option<math::I64Vec2> {
+	let size = map.size();
+	let center = size / 2;
+
+	if matches!(map.get_tile(center), Some(Tile::EmptyWithLight)) {
+		return Some(center);
+	}
+
+	let max_radius = size.x.max(size.y);
+
+	for radius in 1..=max_radius {
+		let mut pos = center + math::I64Vec2::new(-radius, -radius);
+
+		for _ in 0..2 * radius {
+			if matches!(map.get_tile(pos), Some(Tile::EmptyWithLight)) {
+				return Some(pos);
+			}
+			pos.x += 1;
+		}
+
+		for _ in 0..2 * radius {
+			if matches!(map.get_tile(pos), Some(Tile::EmptyWithLight)) {
+				return Some(pos);
+			}
+			pos.y += 1;
+		}
+
+		for _ in 0..2 * radius {
+			if matches!(map.get_tile(pos), Some(Tile::EmptyWithLight)) {
+				return Some(pos);
+			}
+			pos.x -= 1;
+		}
+
+		for _ in 0..2 * radius {
+			if matches!(map.get_tile(pos), Some(Tile::EmptyWithLight)) {
+				return Some(pos);
+			}
+			pos.y -= 1;
+		}
+	}
+
+	None
 }
