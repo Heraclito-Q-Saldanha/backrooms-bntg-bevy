@@ -46,6 +46,7 @@ fn config_local_player(event: On<Add, LocalPlayer>, mut commands: Commands) {
 		LockedAxes::ROTATION_LOCKED,
 		TransformInterpolation,
 		children![(
+			Transform::from_translation(Vec3::Y),
 			Camera3d::default(),
 			camera::Hdr,
 			core_pipeline::tonemapping::Tonemapping::TonyMcMapface,

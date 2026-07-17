@@ -116,7 +116,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>, mut meshes: Res
 	let my_id = steam.steam_id();
 
 	for member_id in member_ids {
-		let transform = Transform::from_xyz(size.x as f32, 1.60f32, size.y as f32);
+		let transform = Transform::from_xyz(size.x as f32, 2f32, size.y as f32);
 		if my_id == member_id {
 			commands.spawn((
 				Mesh3d(meshes.add(Mesh::from(Capsule3d::default()))),
