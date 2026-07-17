@@ -91,7 +91,7 @@ fn on_network_message(event: On<networking::MessageReceive>, asset_server: Res<A
 
 					commands.spawn((
 						DespawnOnExit(GameState::InGame),
-						WorldAssetRoot(asset_server.load(GltfAssetLabel::Scene(id).from_asset("level_0.glb"))),
+						WorldAssetRoot(asset_server.load(GltfAssetLabel::Scene(id).from_asset("models/level_0.glb"))),
 						Transform::from_xyz(x as f32 * 2.0, 0f32, y as f32 * 2.0),
 						tile,
 					));
@@ -169,7 +169,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>, mut meshes: Res
 
 			commands.spawn((
 				DespawnOnExit(GameState::InGame),
-				WorldAssetRoot(asset_server.load(GltfAssetLabel::Scene(id).from_asset("level_0.glb"))),
+				WorldAssetRoot(asset_server.load(GltfAssetLabel::Scene(id).from_asset("models/level_0.glb"))),
 				Transform::from_xyz(x as f32 * 2.0, 0f32, y as f32 * 2.0),
 				tile,
 			));
