@@ -10,6 +10,7 @@ pub enum Message {
 	StartGame,
 	Position(Vec3),
 	Map(wfc::map::Map2D<game::Tile>),
+	PickupItem(bevy::math::I64Vec2),
 }
 
 #[derive(Debug, Clone, Event)]

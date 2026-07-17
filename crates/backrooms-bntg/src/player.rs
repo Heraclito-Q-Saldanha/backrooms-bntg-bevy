@@ -1,5 +1,6 @@
 use crate::*;
 
+use crate::game::GameLayer;
 use avian3d::prelude::*;
 use bevy::anti_alias;
 use bevy::camera;
@@ -38,10 +39,14 @@ pub struct LocalPlayer;
 #[derive(Debug, Component)]
 pub struct PlayerSpeed(f32);
 
+#[derive(Debug, Default, Clone, Copy, Component)]
+pub struct PlayerInteractionRay;
+
 fn config_local_player(event: On<Add, LocalPlayer>, mut commands: Commands) {
 	commands.entity(event.entity).insert((
 		RigidBody::Dynamic,
 		Collider::capsule(0.1, 0.4),
+		CollisionLayers::new([GameLayer::Default], [GameLayer::Default]),
 		LinearVelocity::ZERO,
 		LockedAxes::ROTATION_LOCKED,
 		TransformInterpolation,
@@ -57,6 +62,8 @@ fn config_local_player(event: On<Add, LocalPlayer>, mut commands: Commands) {
 			pbr::ScreenSpaceAmbientOcclusion::default(),
 			anti_alias::taa::TemporalAntiAliasing::default(),
 			Msaa::Off,
+			PlayerInteractionRay,
+			RayCaster::new(Vec3::ZERO.into(), Dir3::NEG_Z).with_max_distance(2.0).with_query_filter(SpatialQueryFilter::from_mask([GameLayer::Interactable])),
 		)],
 		#[cfg(feature = "inspector")]
 		{
