@@ -114,7 +114,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>, steam: Res<stea
 
 	let map = loop {
 		seed += 1;
-		match wfc::map::Map2D::<Tile>::generate(size, seed) {
+		match wfc::Map2D::<Tile>::generate(size, seed) {
 			Ok(value) => break value,
 			Err(_) => continue,
 		}
@@ -187,7 +187,7 @@ fn on_network_message(event: On<networking::MessageReceive>, asset_server: Res<A
 	}
 }
 
-fn find_spawn(map: &wfc::map::Map2D<Tile>) -> Option<math::I64Vec2> {
+fn find_spawn(map: &wfc::Map2D<Tile>) -> Option<math::I64Vec2> {
 	let size = map.size();
 	let center = size / 2;
 

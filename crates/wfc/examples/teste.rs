@@ -1,4 +1,3 @@
-use bevy::math;
 use bevy::prelude::*;
 use wfc::*;
 
@@ -24,7 +23,7 @@ fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut materials
 
 	let map = loop {
 		let seed = rand::random();
-		match map::Map2D::<TileKind>::generate(math::I64Vec2::new(64, 64), seed) {
+		match Map2D::<TileKind>::generate(I64Vec2::new(64, 64), seed) {
 			Ok(value) => break value,
 			Err(_) => continue,
 		}
@@ -34,7 +33,7 @@ fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut materials
 
 	for y in 0..size.y {
 		for x in 0..size.x {
-			let tile = map.get_tile(math::I64Vec2::new(x, y)).expect("tile ausente no mapa gerado");
+			let tile = map.get_tile(I64Vec2::new(x, y)).expect("tile ausente no mapa gerado");
 
 			let color = match tile {
 				TileKind::Grass => Color::srgb(0.2, 0.7, 0.2),
