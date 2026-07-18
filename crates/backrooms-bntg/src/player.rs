@@ -57,6 +57,9 @@ fn config_local_player(event: On<Add, LocalPlayer>, mut commands: Commands) {
 			pbr::ScreenSpaceAmbientOcclusion::default(),
 			anti_alias::taa::TemporalAntiAliasing::default(),
 			Msaa::Off,
+			post_process::effect_stack::ChromaticAberration { intensity: 0.015, ..Default::default() },
+			post_process::effect_stack::LensDistortion { intensity: 0.10, ..Default::default() },
+			post_process::effect_stack::Vignette { intensity: 0.9, ..Default::default() },
 		)],
 		#[cfg(feature = "inspector")]
 		{
