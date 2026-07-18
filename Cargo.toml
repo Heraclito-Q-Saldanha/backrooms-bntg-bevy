@@ -2,10 +2,9 @@
 members = ["crates/backrooms-bntg", "crates/wfc"]
 resolver = "3"
 
-
 [profile.dev]
 opt-level = 1
-strip = true
+debug = true
 
 [profile.dev.package."*"]
 opt-level = 3
