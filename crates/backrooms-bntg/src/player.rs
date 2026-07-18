@@ -12,7 +12,7 @@ use bevy::prelude::*;
 
 const PITCH_LIMIT: f32 = std::f32::consts::FRAC_PI_2 - 0.01;
 const BLOOM_INTENSITY: f32 = 0.35;
-
+const CHROMATIC_ABERRATION_INTENSITY: f32 = 0.0015;
 const CAMERA_SENSITIVITY: Vec2 = Vec2 { x: 0.003, y: 0.002 };
 
 pub struct PlayerPlugin;
@@ -57,6 +57,7 @@ fn config_local_player(event: On<Add, LocalPlayer>, mut commands: Commands) {
 			pbr::ScreenSpaceAmbientOcclusion::default(),
 			anti_alias::taa::TemporalAntiAliasing::default(),
 			Msaa::Off,
+			screen_effect::FullscreenEffect { intensity: CHROMATIC_ABERRATION_INTENSITY },
 		)],
 		#[cfg(feature = "inspector")]
 		{

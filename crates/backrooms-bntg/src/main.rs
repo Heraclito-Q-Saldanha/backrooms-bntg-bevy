@@ -5,10 +5,13 @@ pub mod networking;
 pub mod pause;
 pub mod player;
 pub mod player_menu;
+pub mod screen_effect;
 pub mod search_lobby;
 pub mod steam;
 pub mod ui;
 pub mod waiting_players;
+
+use bevy::core_pipeline;
 
 use bevy::light;
 use bevy::prelude::*;
@@ -67,6 +70,7 @@ fn main() {
 	app.add_plugins(networking::NetworkingPlugin);
 	app.add_plugins(bevy_skein::SkeinPlugin::default());
 	app.add_plugins(avian3d::PhysicsPlugins::default());
+	app.add_plugins(core_pipeline::fullscreen_material::FullscreenMaterialPlugin::<screen_effect::FullscreenEffect>::default());
 
 	app.insert_resource(GlobalAmbientLight { brightness: AMBIENT_BRIGHTNESS, ..default() });
 	app.insert_resource(light::DirectionalLightShadowMap { size: SHADOW_RESOLUTION });
