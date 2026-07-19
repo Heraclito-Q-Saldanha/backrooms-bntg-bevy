@@ -90,9 +90,9 @@ pub fn tiled(item: proc_macro::TokenStream) -> proc_macro::TokenStream {
 		let neighbors: Vec<_> = values.iter().filter_map(|value| variant_lookup.get(value).cloned()).map(|variant_ident| quote! { Self::#variant_ident }).collect();
 
 		if neighbors.is_empty() {
-			quote! { &[] }
+			quote! { [] }
 		} else {
-			quote! { &[ #(#neighbors),* ] }
+			quote! { [ #(#neighbors),* ] }
 		}
 	};
 
@@ -122,19 +122,19 @@ pub fn tiled(item: proc_macro::TokenStream) -> proc_macro::TokenStream {
 
 		left = quote! {
 			#left
-			Self::#variant_ident => #left_expr,
+			Self::#variant_ident => #left_expr .contains(cell),
 		};
 		right = quote! {
 			#right
-			Self::#variant_ident => #right_expr,
+			Self::#variant_ident => #right_expr .contains(cell),
 		};
 		up = quote! {
 			#up
-			Self::#variant_ident => #up_expr,
+			Self::#variant_ident => #up_expr .contains(cell),
 		};
 		down = quote! {
 			#down
-			Self::#variant_ident => #down_expr,
+			Self::#variant_ident => #down_expr .contains(cell),
 		};
 	}
 
@@ -156,25 +156,25 @@ pub fn tiled(item: proc_macro::TokenStream) -> proc_macro::TokenStream {
 				]
 			}
 
-			fn allowed_left(&self) -> &'static [Self] {
+			fn is_allowed_left(&self, cell: &Self) -> bool {
 				match self {
 					#left
 				}
 			}
 
-			fn allowed_right(&self) -> &'static [Self] {
+			fn is_allowed_right(&self, cell: &Self) -> bool {
 				match self {
 					#right
 				}
 			}
 
-			fn allowed_up(&self) -> &'static [Self] {
+			fn is_allowed_up(&self, cell: &Self) -> bool {
 				match self {
 					#up
 				}
 			}
 
-			fn allowed_down(&self) -> &'static [Self] {
+			fn is_allowed_down(&self, cell: &Self) -> bool {
 				match self {
 					#down
 				}
@@ -287,19 +287,19 @@ pub fn tile(item: proc_macro::TokenStream) -> proc_macro::TokenStream {
 
 		left = quote! {
 			#left
-			Self::#ident => &[#left_value],
+			Self::#ident => [#left_value].contains(cell),
 		};
 		right = quote! {
 			#right
-			Self::#ident => &[#right_value],
+			Self::#ident => [#right_value].contains(cell),
 		};
 		up = quote! {
 			#up
-			Self::#ident => &[#up_value],
+			Self::#ident => [#up_value].contains(cell),
 		};
 		down = quote! {
 			#down
-			Self::#ident => &[#down_value],
+			Self::#ident => [#down_value].contains(cell),
 		};
 
 		weights = quote! {
@@ -315,37 +315,38 @@ pub fn tile(item: proc_macro::TokenStream) -> proc_macro::TokenStream {
 
 	quote! {
 		impl ::wfc::Tile for #ident {
+			#[inline(always)]
 			fn weight(&self) -> u16 {
 				match self {
 					#weights
 				}
 			}
-
+			#[inline(always)]
 			fn all() -> &'static [Self] {
 				&[
 					#all
 				]
 			}
 
-			fn allowed_left(&self) -> &'static [Self] {
+			fn is_allowed_left(&self, cell: &Self) -> bool {
 				match self {
 					#left
 				}
 			}
 
-			fn allowed_right(&self) -> &'static [Self] {
+			fn is_allowed_right(&self, cell: &Self) -> bool {
 				match self {
 					#right
 				}
 			}
 
-			fn allowed_up(&self) -> &'static [Self] {
+			fn is_allowed_up(&self, cell: &Self) -> bool {
 				match self {
 					#up
 				}
 			}
 
-			fn allowed_down(&self) -> &'static [Self] {
+			fn is_allowed_down(&self, cell: &Self) -> bool {
 				match self {
 					#down
 				}

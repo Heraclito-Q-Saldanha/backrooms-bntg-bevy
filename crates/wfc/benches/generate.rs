@@ -1,4 +1,5 @@
 use criterion::*;
+use rand::SeedableRng;
 use wfc::*;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, wfc::Tiled)]
@@ -13,8 +14,10 @@ fn generate(bencher: &mut Bencher) {
 	bencher.iter(|| {
 		for i in [32, 64, 128, 256] {
 			let size = I64Vec2::new(i, i);
-			let seed = i as u64;
-			let _map = Map2D::<ExampleTile>::generate(size, seed);
+			let mut seed = [0; 32usize];
+			seed[0] = i as u8;
+			let mut rng = rand::rngs::SmallRng::from_seed(seed);
+			let _map = map::Map2D::<ExampleTile>::generate(size, &mut rng);
 		}
 	});
 }

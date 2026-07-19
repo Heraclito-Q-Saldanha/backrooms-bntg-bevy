@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use rand::SeedableRng;
 use wfc::*;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, wfc::Tile)]
@@ -21,19 +22,19 @@ fn main() {
 fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut materials: ResMut<Assets<ColorMaterial>>) {
 	commands.spawn(Camera2d);
 
+	let size = I64Vec2::new(64, 64);
+	let mut rng = rand::rngs::SmallRng::from_seed([0; 32usize]);
+
 	let map = loop {
-		let seed = rand::random();
-		match Map2D::<TileKind>::generate(I64Vec2::new(64, 64), seed) {
-			Ok(value) => break value,
+		match map::Map2D::generate(size, &mut rng) {
+			Ok(map) => break map,
 			Err(_) => continue,
 		}
 	};
 
-	let size = map.size();
-
 	for y in 0..size.y {
 		for x in 0..size.x {
-			let tile = map.get_tile(I64Vec2::new(x, y)).expect("tile ausente no mapa gerado");
+			let tile = map.get_cell(I64Vec2::new(x, y)).expect("tile ausente no mapa gerado");
 
 			let color = match tile {
 				TileKind::Grass => Color::srgb(0.2, 0.7, 0.2),

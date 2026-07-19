@@ -110,11 +110,10 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>, steam: Res<stea
 		return;
 	}
 
-	let mut seed = rand::random();
+	let mut rng = rand::rng();
 
 	let map = loop {
-		seed += 1;
-		match wfc::Map2D::<Tile>::generate(size, seed) {
+		match wfc::map::Map2D::<Tile>::generate(size, &mut rng) {
 			Ok(value) => break value,
 			Err(_) => continue,
 		}
@@ -122,7 +121,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>, steam: Res<stea
 
 	for x in 0..size.x {
 		for y in 0..size.y {
-			let tile = map.get_tile(math::i64vec2(x, y)).unwrap();
+			let tile = *map.get_cell(math::i64vec2(x, y)).unwrap();
 			let id = tile as usize;
 
 			commands.spawn((
@@ -162,7 +161,7 @@ fn on_network_message(event: On<networking::MessageReceive>, asset_server: Res<A
 
 			for x in 0..size.x {
 				for y in 0..size.y {
-					let tile = map.get_tile(math::i64vec2(x, y)).unwrap();
+					let tile = *map.get_cell(math::i64vec2(x, y)).unwrap();
 					let id = tile as usize;
 
 					commands.spawn((
@@ -187,11 +186,11 @@ fn on_network_message(event: On<networking::MessageReceive>, asset_server: Res<A
 	}
 }
 
-fn find_spawn(map: &wfc::Map2D<Tile>) -> Option<math::I64Vec2> {
+fn find_spawn(map: &wfc::map::Map2D<Tile>) -> Option<math::I64Vec2> {
 	let size = map.size();
 	let center = size / 2;
 
-	if matches!(map.get_tile(center), Some(Tile::EmptyWithLight)) {
+	if matches!(map.get_cell(center), Some(Tile::EmptyWithLight)) {
 		return Some(center);
 	}
 
@@ -201,28 +200,28 @@ fn find_spawn(map: &wfc::Map2D<Tile>) -> Option<math::I64Vec2> {
 		let mut pos = center + math::I64Vec2::new(-radius, -radius);
 
 		for _ in 0..2 * radius {
-			if matches!(map.get_tile(pos), Some(Tile::EmptyWithLight)) {
+			if matches!(map.get_cell(pos), Some(Tile::EmptyWithLight)) {
 				return Some(pos);
 			}
 			pos.x += 1;
 		}
 
 		for _ in 0..2 * radius {
-			if matches!(map.get_tile(pos), Some(Tile::EmptyWithLight)) {
+			if matches!(map.get_cell(pos), Some(Tile::EmptyWithLight)) {
 				return Some(pos);
 			}
 			pos.y += 1;
 		}
 
 		for _ in 0..2 * radius {
-			if matches!(map.get_tile(pos), Some(Tile::EmptyWithLight)) {
+			if matches!(map.get_cell(pos), Some(Tile::EmptyWithLight)) {
 				return Some(pos);
 			}
 			pos.x -= 1;
 		}
 
 		for _ in 0..2 * radius {
-			if matches!(map.get_tile(pos), Some(Tile::EmptyWithLight)) {
+			if matches!(map.get_cell(pos), Some(Tile::EmptyWithLight)) {
 				return Some(pos);
 			}
 			pos.y -= 1;
