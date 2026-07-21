@@ -4,6 +4,7 @@ use rand::distr::*;
 use rand::seq::*;
 use rand::*;
 use std::collections;
+use std::mem;
 
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 #[derive(Debug, Clone)]
@@ -102,16 +103,13 @@ impl<T: Tile + 'static> ProbabilityMap<T> {
 		Some(self.data.position(*index))
 	}
 	fn collapse<R: Rng>(&mut self, position: I64Vec2, rng: &mut R, step: &mut Step<T>) -> Result<Cell<T>, ()> {
-		let Some(current) = self.data.get_cell(position).cloned() else {
+		let Some(current) = self.data.get_cell_mut(position) else {
 			return Err(());
 		};
 
 		step.push(position, current.clone());
 
-		let (collapsed, remainder) = current.collapse(rng)?;
-		self.data.set_cell(position, collapsed);
-
-		Ok(remainder)
+		Ok(current.collapse(rng)?)
 	}
 	fn propagate(&mut self, position: I64Vec2, step: &mut Step<T>) -> Result<(), ()> {
 		let mut queue = collections::VecDeque::new();
@@ -222,17 +220,21 @@ impl<T: Tile + 'static> Cell<T> {
 	pub fn new() -> Self {
 		Self::Wave(T::all().to_vec())
 	}
-	pub fn collapse<R: rand::Rng>(self, rng: &mut R) -> Result<(Self, Self), ()> {
-		match self {
-			Self::Wave(mut wave) => {
+	pub fn collapse<R: rand::Rng>(&mut self, rng: &mut R) -> Result<Self, ()> {
+		let mut value = match self {
+			Self::Wave(wave) => {
 				let weights = wave.iter().map(|cell| cell.weight());
 				let distribution = distr::weighted::WeightedIndex::new(weights).map_err(|_| ())?;
 				let index = distribution.sample(rng);
 
-				Ok((Self::Collapsed(wave.remove(index)), Self::Wave(wave)))
+				Self::Collapsed(wave.remove(index))
 			}
-			Self::Collapsed(_) => Err(()),
-		}
+			Self::Collapsed(_) => return Err(()),
+		};
+
+		mem::swap(self, &mut value);
+
+		Ok(value)
 	}
 }
 
