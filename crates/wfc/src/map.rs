@@ -39,12 +39,12 @@ impl<T: Clone> Map2D<T> {
 		position.x >= 0 && position.y >= 0 && position.x < self.size.x && position.y < self.size.y
 	}
 	#[inline(always)]
-	pub fn set_cell(&mut self, position: I64Vec2, tile: T) {
+	pub fn set_cell(&mut self, position: I64Vec2, cell: T) {
 		if !self.is_in_range(position) {
 			return;
 		}
 		let index = self.index(position);
-		*unsafe { self.data.get_unchecked_mut(index) } = tile;
+		*unsafe { self.data.get_unchecked_mut(index) } = cell;
 	}
 	#[inline(always)]
 	pub fn get_cell(&self, position: I64Vec2) -> Option<&T> {

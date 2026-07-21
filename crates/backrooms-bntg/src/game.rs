@@ -112,12 +112,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>, steam: Res<stea
 
 	let mut rng = rand::rng();
 
-	let map = loop {
-		match wfc::map::Map2D::<Tile>::generate(size, &mut rng) {
-			Ok(value) => break value,
-			Err(_) => continue,
-		}
-	};
+	let map = wfc::map::Map2D::<Tile>::generate(size, &mut rng).unwrap();
 
 	for x in 0..size.x {
 		for y in 0..size.y {

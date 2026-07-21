@@ -19,6 +19,12 @@ pub enum Cell<T> {
 	Collapsed(T),
 }
 
+#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
+#[derive(Debug, Clone)]
+pub struct Step<T> {
+	old_values: Vec<(I64Vec2, Cell<T>)>,
+}
+
 impl<T: Tile + 'static> ProbabilityMap<T> {
 	pub fn new(size: I64Vec2) -> Self {
 		let default = Cell::Wave(T::all().to_vec());
@@ -26,18 +32,41 @@ impl<T: Tile + 'static> ProbabilityMap<T> {
 
 		Self { data, size }
 	}
-	pub fn step<R: rand::Rng>(&mut self, rng: &mut R) -> Result<bool, ()> {
+	pub fn step<R: rand::Rng>(&mut self, rng: &mut R) -> Result<Option<Step<T>>, ()> {
 		if let Some(position) = self.next_cell(rng) {
-			self.collapse(position, rng)?;
-			self.propagate(position)?;
+			let mut step = Step::new();
 
-			Ok(false)
+			self.collapse(position, rng, &mut step)?;
+			self.propagate(position, &mut step)?;
+
+			Ok(Some(step))
 		} else {
-			Ok(true)
+			Ok(None)
+		}
+	}
+	pub fn reverse(&mut self, mut step: Step<T>) {
+		while let Some((position, tile)) = step.old_values.pop() {
+			self.data.set_cell(position, tile);
 		}
 	}
 	pub fn generate<R: rand::Rng>(&mut self, rng: &mut R) -> Result<(), ()> {
-		while !self.step(rng)? {}
+		let mut steps = Vec::new();
+
+		loop {
+			match self.step(rng) {
+				Ok(Some(step)) => {
+					steps.push(step);
+				}
+				Ok(None) => break,
+				Err(_) => {
+					if let Some(step) = steps.pop() {
+						self.reverse(step);
+					} else {
+						return Err(());
+					}
+				}
+			}
+		}
 		Ok(())
 	}
 	pub fn into_map(self) -> Result<map::Map2D<T>, ()> {
@@ -77,10 +106,12 @@ impl<T: Tile + 'static> ProbabilityMap<T> {
 
 		Some(self.data.position(*index))
 	}
-	fn collapse<R: Rng>(&mut self, position: I64Vec2, rng: &mut R) -> Result<(), ()> {
+	fn collapse<R: Rng>(&mut self, position: I64Vec2, rng: &mut R, step: &mut Step<T>) -> Result<(), ()> {
 		let Some(Cell::Wave(current)) = self.data.get_cell(position) else {
 			return Err(());
 		};
+
+		step.push((position, Cell::Wave(current.clone())));
 
 		let weights = current.iter().map(|cell| cell.weight());
 		let distribution = distr::weighted::WeightedIndex::new(weights).map_err(|_| ())?;
@@ -91,7 +122,7 @@ impl<T: Tile + 'static> ProbabilityMap<T> {
 
 		Ok(())
 	}
-	fn propagate(&mut self, position: I64Vec2) -> Result<(), ()> {
+	fn propagate(&mut self, position: I64Vec2, step: &mut Step<T>) -> Result<(), ()> {
 		let mut queue = collections::VecDeque::new();
 
 		queue.push_back(position);
@@ -111,6 +142,8 @@ impl<T: Tile + 'static> ProbabilityMap<T> {
 			if let Some(Cell::Wave(neighbor)) = self.data.get_cell_mut(right) {
 				let len = neighbor.len();
 
+				step.push((right, Cell::Wave(neighbor.clone())));
+
 				neighbor.retain(|candidate| current.is_allowed_right(candidate));
 
 				if neighbor.is_empty() {
@@ -123,6 +156,8 @@ impl<T: Tile + 'static> ProbabilityMap<T> {
 			}
 			if let Some(Cell::Wave(neighbor)) = self.data.get_cell_mut(left) {
 				let len = neighbor.len();
+
+				step.push((left, Cell::Wave(neighbor.clone())));
 
 				neighbor.retain(|candidate| current.is_allowed_left(candidate));
 
@@ -137,6 +172,8 @@ impl<T: Tile + 'static> ProbabilityMap<T> {
 			if let Some(Cell::Wave(neighbor)) = self.data.get_cell_mut(up) {
 				let len = neighbor.len();
 
+				step.push((up, Cell::Wave(neighbor.clone())));
+
 				neighbor.retain(|candidate| current.is_allowed_up(candidate));
 
 				if neighbor.is_empty() {
@@ -149,6 +186,8 @@ impl<T: Tile + 'static> ProbabilityMap<T> {
 			}
 			if let Some(Cell::Wave(neighbor)) = self.data.get_cell_mut(down) {
 				let len = neighbor.len();
+
+				step.push((down, Cell::Wave(neighbor.clone())));
 
 				neighbor.retain(|candidate| current.is_allowed_down(candidate));
 
@@ -163,6 +202,21 @@ impl<T: Tile + 'static> ProbabilityMap<T> {
 		}
 
 		Ok(())
+	}
+}
+
+impl<T> Step<T> {
+	#[inline(always)]
+	pub fn new() -> Self {
+		Self { old_values: Vec::new() }
+	}
+	#[inline(always)]
+	pub fn pop(&mut self) -> Option<(bevy_math::I64Vec2, probability::Cell<T>)> {
+		self.old_values.pop()
+	}
+	#[inline(always)]
+	pub fn push(&mut self, value: (bevy_math::I64Vec2, probability::Cell<T>)) {
+		self.old_values.push(value);
 	}
 }
 
