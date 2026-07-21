@@ -27,7 +27,7 @@ pub struct Step<T> {
 
 impl<T: Tile + 'static> ProbabilityMap<T> {
 	pub fn new(size: I64Vec2) -> Self {
-		let default = Cell::Wave(T::all().to_vec());
+		let default = Cell::new();
 		let data = map::Map2D::new(size, default);
 
 		Self { data, size }
@@ -217,7 +217,11 @@ impl<T> Step<T> {
 	}
 }
 
-impl<T: Tile> Cell<T> {
+impl<T: Tile + 'static> Cell<T> {
+	#[inline(always)]
+	pub fn new() -> Self {
+		Self::Wave(T::all().to_vec())
+	}
 	pub fn collapse<R: rand::Rng>(self, rng: &mut R) -> Result<(Self, Self), ()> {
 		match self {
 			Self::Wave(mut wave) => {
