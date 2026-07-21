@@ -44,11 +44,6 @@ impl<T: Tile + 'static> ProbabilityMap<T> {
 			Ok(None)
 		}
 	}
-	pub fn reverse(&mut self, mut step: Step<T>) {
-		while let Some((position, tile)) = step.old_values.pop() {
-			self.data.set_cell(position, tile);
-		}
-	}
 	pub fn generate<R: rand::Rng>(&mut self, rng: &mut R) -> Result<(), ()> {
 		let mut steps = Vec::new();
 
@@ -203,6 +198,12 @@ impl<T: Tile + 'static> ProbabilityMap<T> {
 
 		Ok(())
 	}
+
+	fn reverse(&mut self, mut step: Step<T>) {
+		while let Some((position, tile)) = step.pop() {
+			self.data.set_cell(position, tile);
+		}
+	}
 }
 
 impl<T> Step<T> {
@@ -217,6 +218,21 @@ impl<T> Step<T> {
 	#[inline(always)]
 	pub fn push(&mut self, value: (bevy_math::I64Vec2, probability::Cell<T>)) {
 		self.old_values.push(value);
+	}
+}
+
+impl<T: Tile> Cell<T> {
+	pub fn collapse<R: rand::Rng>(&mut self, rng: &mut R) -> Result<Self, ()> {
+		match self {
+			Self::Wave(wave) => {
+				let weights = wave.iter().map(|cell| cell.weight());
+				let distribution = distr::weighted::WeightedIndex::new(weights).map_err(|_| ())?;
+				let index = distribution.sample(rng);
+
+				Ok(Cell::Collapsed(wave.remove(index)))
+			}
+			Self::Collapsed(_) => Err(()),
+		}
 	}
 }
 
