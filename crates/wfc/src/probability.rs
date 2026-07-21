@@ -101,21 +101,17 @@ impl<T: Tile + 'static> ProbabilityMap<T> {
 
 		Some(self.data.position(*index))
 	}
-	fn collapse<R: Rng>(&mut self, position: I64Vec2, rng: &mut R, step: &mut Step<T>) -> Result<(), ()> {
-		let Some(Cell::Wave(current)) = self.data.get_cell(position) else {
+	fn collapse<R: Rng>(&mut self, position: I64Vec2, rng: &mut R, step: &mut Step<T>) -> Result<Cell<T>, ()> {
+		let Some(current) = self.data.get_cell(position).cloned() else {
 			return Err(());
 		};
 
-		step.push((position, Cell::Wave(current.clone())));
+		step.push(position, current.clone());
 
-		let weights = current.iter().map(|cell| cell.weight());
-		let distribution = distr::weighted::WeightedIndex::new(weights).map_err(|_| ())?;
-		let index = distribution.sample(rng);
-		let cell = current[index].clone();
+		let (collapsed, remainder) = current.collapse(rng)?;
+		self.data.set_cell(position, collapsed);
 
-		self.data.set_cell(position, Cell::Collapsed(cell));
-
-		Ok(())
+		Ok(remainder)
 	}
 	fn propagate(&mut self, position: I64Vec2, step: &mut Step<T>) -> Result<(), ()> {
 		let mut queue = collections::VecDeque::new();
@@ -137,7 +133,7 @@ impl<T: Tile + 'static> ProbabilityMap<T> {
 			if let Some(Cell::Wave(neighbor)) = self.data.get_cell_mut(right) {
 				let len = neighbor.len();
 
-				step.push((right, Cell::Wave(neighbor.clone())));
+				step.push(right, Cell::Wave(neighbor.clone()));
 
 				neighbor.retain(|candidate| current.is_allowed_right(candidate));
 
@@ -152,7 +148,7 @@ impl<T: Tile + 'static> ProbabilityMap<T> {
 			if let Some(Cell::Wave(neighbor)) = self.data.get_cell_mut(left) {
 				let len = neighbor.len();
 
-				step.push((left, Cell::Wave(neighbor.clone())));
+				step.push(left, Cell::Wave(neighbor.clone()));
 
 				neighbor.retain(|candidate| current.is_allowed_left(candidate));
 
@@ -167,7 +163,7 @@ impl<T: Tile + 'static> ProbabilityMap<T> {
 			if let Some(Cell::Wave(neighbor)) = self.data.get_cell_mut(up) {
 				let len = neighbor.len();
 
-				step.push((up, Cell::Wave(neighbor.clone())));
+				step.push(up, Cell::Wave(neighbor.clone()));
 
 				neighbor.retain(|candidate| current.is_allowed_up(candidate));
 
@@ -182,7 +178,7 @@ impl<T: Tile + 'static> ProbabilityMap<T> {
 			if let Some(Cell::Wave(neighbor)) = self.data.get_cell_mut(down) {
 				let len = neighbor.len();
 
-				step.push((down, Cell::Wave(neighbor.clone())));
+				step.push(down, Cell::Wave(neighbor.clone()));
 
 				neighbor.retain(|candidate| current.is_allowed_down(candidate));
 
@@ -212,24 +208,24 @@ impl<T> Step<T> {
 		Self { old_values: Vec::new() }
 	}
 	#[inline(always)]
-	pub fn pop(&mut self) -> Option<(bevy_math::I64Vec2, probability::Cell<T>)> {
+	pub fn pop(&mut self) -> Option<(bevy_math::I64Vec2, Cell<T>)> {
 		self.old_values.pop()
 	}
 	#[inline(always)]
-	pub fn push(&mut self, value: (bevy_math::I64Vec2, probability::Cell<T>)) {
-		self.old_values.push(value);
+	pub fn push(&mut self, position: I64Vec2, value: Cell<T>) {
+		self.old_values.push((position, value));
 	}
 }
 
 impl<T: Tile> Cell<T> {
-	pub fn collapse<R: rand::Rng>(&mut self, rng: &mut R) -> Result<Self, ()> {
+	pub fn collapse<R: rand::Rng>(self, rng: &mut R) -> Result<(Self, Self), ()> {
 		match self {
-			Self::Wave(wave) => {
+			Self::Wave(mut wave) => {
 				let weights = wave.iter().map(|cell| cell.weight());
 				let distribution = distr::weighted::WeightedIndex::new(weights).map_err(|_| ())?;
 				let index = distribution.sample(rng);
 
-				Ok(Cell::Collapsed(wave.remove(index)))
+				Ok((Self::Collapsed(wave.remove(index)), Self::Wave(wave)))
 			}
 			Self::Collapsed(_) => Err(()),
 		}
