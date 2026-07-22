@@ -25,12 +25,7 @@ fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut materials
 	let size = I64Vec2::new(64, 64);
 	let mut rng = rand::rngs::SmallRng::from_seed([0; 32usize]);
 
-	let map = loop {
-		match map::Map2D::generate(size, &mut rng) {
-			Ok(map) => break map,
-			Err(_) => continue,
-		}
-	};
+	let map = map::Map2D::generate(size, &mut rng);
 
 	for y in 0..size.y {
 		for x in 0..size.x {

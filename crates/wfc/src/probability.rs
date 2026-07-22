@@ -4,6 +4,7 @@ use rand::distr::*;
 use rand::seq::*;
 use rand::*;
 use std::collections;
+use std::mem;
 
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 #[derive(Debug, Clone)]
@@ -19,25 +20,63 @@ pub enum Cell<T> {
 	Collapsed(T),
 }
 
+#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
+#[derive(Debug, Clone)]
+struct Step<T> {
+	old_values: Vec<(I64Vec2, Cell<T>)>,
+}
+
 impl<T: Tile + 'static> ProbabilityMap<T> {
 	pub fn new(size: I64Vec2) -> Self {
-		let default = Cell::Wave(T::all().to_vec());
+		let default = Cell::new();
 		let data = map::Map2D::new(size, default);
 
 		Self { data, size }
 	}
-	pub fn step<R: rand::Rng>(&mut self, rng: &mut R) -> Result<bool, ()> {
-		if let Some(position) = self.next_cell(rng) {
-			self.collapse(position, rng)?;
-			self.propagate(position)?;
 
-			Ok(false)
-		} else {
-			Ok(true)
-		}
-	}
 	pub fn generate<R: rand::Rng>(&mut self, rng: &mut R) -> Result<(), ()> {
-		while !self.step(rng)? {}
+		let mut tracking = Vec::<(I64Vec2, Cell<T>, Step<T>)>::new();
+		let mut is_backtracking = false;
+
+		loop {
+			let (position, mut cell) = match is_backtracking {
+				true => match tracking.pop() {
+					Some((position, cell, step)) => {
+						self.reverse(step);
+						(position, cell)
+					}
+					None => return Err(()),
+				},
+				false => match self.next_cell(rng) {
+					Some(position) => {
+						let Some(cell) = self.data.get_cell(position).cloned() else {
+							return Err(());
+						};
+						(position, cell)
+					}
+					None => break,
+				},
+			};
+
+			let mut step = Step::new();
+
+			step.push(position, cell.clone());
+
+			let Ok(remainder) = cell.collapse(rng) else {
+				is_backtracking = true;
+				continue;
+			};
+
+			self.data.set_cell(position, cell);
+
+			if self.propagate(position, &mut step).is_err() {
+				is_backtracking = true;
+				continue;
+			}
+
+			tracking.push((position, remainder, step));
+			is_backtracking = false;
+		}
 		Ok(())
 	}
 	pub fn into_map(self) -> Result<map::Map2D<T>, ()> {
@@ -77,21 +116,7 @@ impl<T: Tile + 'static> ProbabilityMap<T> {
 
 		Some(self.data.position(*index))
 	}
-	fn collapse<R: Rng>(&mut self, position: I64Vec2, rng: &mut R) -> Result<(), ()> {
-		let Some(Cell::Wave(current)) = self.data.get_cell(position) else {
-			return Err(());
-		};
-
-		let weights = current.iter().map(|cell| cell.weight());
-		let distribution = distr::weighted::WeightedIndex::new(weights).map_err(|_| ())?;
-		let index = distribution.sample(rng);
-		let cell = current[index].clone();
-
-		self.data.set_cell(position, Cell::Collapsed(cell));
-
-		Ok(())
-	}
-	fn propagate(&mut self, position: I64Vec2) -> Result<(), ()> {
+	fn propagate(&mut self, position: I64Vec2, step: &mut Step<T>) -> Result<(), ()> {
 		let mut queue = collections::VecDeque::new();
 
 		queue.push_back(position);
@@ -111,6 +136,8 @@ impl<T: Tile + 'static> ProbabilityMap<T> {
 			if let Some(Cell::Wave(neighbor)) = self.data.get_cell_mut(right) {
 				let len = neighbor.len();
 
+				step.push(right, Cell::Wave(neighbor.clone()));
+
 				neighbor.retain(|candidate| current.is_allowed_right(candidate));
 
 				if neighbor.is_empty() {
@@ -123,6 +150,8 @@ impl<T: Tile + 'static> ProbabilityMap<T> {
 			}
 			if let Some(Cell::Wave(neighbor)) = self.data.get_cell_mut(left) {
 				let len = neighbor.len();
+
+				step.push(left, Cell::Wave(neighbor.clone()));
 
 				neighbor.retain(|candidate| current.is_allowed_left(candidate));
 
@@ -137,6 +166,8 @@ impl<T: Tile + 'static> ProbabilityMap<T> {
 			if let Some(Cell::Wave(neighbor)) = self.data.get_cell_mut(up) {
 				let len = neighbor.len();
 
+				step.push(up, Cell::Wave(neighbor.clone()));
+
 				neighbor.retain(|candidate| current.is_allowed_up(candidate));
 
 				if neighbor.is_empty() {
@@ -149,6 +180,8 @@ impl<T: Tile + 'static> ProbabilityMap<T> {
 			}
 			if let Some(Cell::Wave(neighbor)) = self.data.get_cell_mut(down) {
 				let len = neighbor.len();
+
+				step.push(down, Cell::Wave(neighbor.clone()));
 
 				neighbor.retain(|candidate| current.is_allowed_down(candidate));
 
@@ -163,6 +196,50 @@ impl<T: Tile + 'static> ProbabilityMap<T> {
 		}
 
 		Ok(())
+	}
+
+	fn reverse(&mut self, mut step: Step<T>) {
+		while let Some((position, tile)) = step.pop() {
+			self.data.set_cell(position, tile);
+		}
+	}
+}
+
+impl<T> Step<T> {
+	#[inline(always)]
+	fn new() -> Self {
+		Self { old_values: Vec::new() }
+	}
+	#[inline(always)]
+	fn pop(&mut self) -> Option<(bevy_math::I64Vec2, Cell<T>)> {
+		self.old_values.pop()
+	}
+	#[inline(always)]
+	fn push(&mut self, position: I64Vec2, value: Cell<T>) {
+		self.old_values.push((position, value));
+	}
+}
+
+impl<T: Tile + 'static> Cell<T> {
+	#[inline(always)]
+	pub fn new() -> Self {
+		Self::Wave(T::all().to_vec())
+	}
+	pub fn collapse<R: rand::Rng>(&mut self, rng: &mut R) -> Result<Self, ()> {
+		let mut value = match self {
+			Self::Wave(wave) => {
+				let weights = wave.iter().map(|cell| cell.weight());
+				let distribution = distr::weighted::WeightedIndex::new(weights).map_err(|_| ())?;
+				let index = distribution.sample(rng);
+
+				Self::Collapsed(wave.remove(index))
+			}
+			Self::Collapsed(_) => return Err(()),
+		};
+
+		mem::swap(self, &mut value);
+
+		Ok(value)
 	}
 }
 
