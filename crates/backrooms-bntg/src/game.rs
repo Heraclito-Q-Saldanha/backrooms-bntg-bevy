@@ -4,7 +4,7 @@ use bevy::camera;
 use bevy::math;
 use bevy::prelude::*;
 
-const MAX_SHADOW_LIGHTS: usize = 24;
+const MAX_SHADOW_LIGHTS: usize = 22;
 const LIGHT_INTENSITY: f32 = 750000.0;
 const LIGHT_RANGE: f32 = 10.0;
 
@@ -69,7 +69,7 @@ fn spawn_lights(event: On<Add, SpawnLight>, transforms: Query<&Transform>, mut c
 		},
 		camera::visibility::VisibilityRange {
 			start_margin: 0.0..0.0,
-			end_margin: 34.0..36.0,
+			end_margin: 40.0..45.0,
 			use_aabb: false,
 		},
 	));
