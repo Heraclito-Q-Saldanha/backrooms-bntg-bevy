@@ -93,7 +93,7 @@ fn despawn_players(event: On<steam::LobbyChatUpdate>, players: Query<(Entity, &p
 }
 
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>, steam: Res<steam::SteamClient>) {
-	let size = math::I64Vec2::new(64, 64);
+	let size = math::I64Vec2::new(128, 128);
 
 	#[cfg(debug_assertions)]
 	{
@@ -112,12 +112,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>, steam: Res<stea
 
 	let mut rng = rand::rng();
 
-	let map = loop {
-		match wfc::map::Map2D::<Tile>::generate(size, &mut rng) {
-			Ok(value) => break value,
-			Err(_) => continue,
-		}
-	};
+	let map = wfc::map::Map2D::<Tile>::generate(size, &mut rng);
 
 	for x in 0..size.x {
 		for y in 0..size.y {
