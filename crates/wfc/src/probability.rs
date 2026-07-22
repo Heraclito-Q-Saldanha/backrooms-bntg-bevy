@@ -46,28 +46,41 @@ impl<T: Tile + 'static> ProbabilityMap<T> {
 		}
 	}
 	pub fn generate<R: rand::Rng>(&mut self, rng: &mut R) -> Result<(), ()> {
-		let mut tracking = Vec::new();
+		let mut tracking = Vec::<(I64Vec2, Cell<T>, Step<T>)>::new();
 		let mut is_backtracking = false;
 
 		loop {
 			match is_backtracking {
 				true => {
-					if let Some(step) = tracking.pop() {
+					if let Some((position, remainder, step)) = tracking.pop() {
 						self.reverse(step);
+
 						is_backtracking = true;
 					} else {
 						return Err(());
 					}
 				}
-				false => match self.step(rng) {
-					Ok(Some(step)) => {
-						tracking.push(step);
+				false => {
+					if let Some(position) = self.next_cell(rng) {
+						let mut step = Step::new();
+
+						let remainder = match self.collapse(position, rng, &mut step) {
+							Ok(remainder) => remainder,
+							Err(_) => {
+								is_backtracking = true;
+								continue;
+							}
+						};
+						if self.propagate(position, &mut step).is_err() {
+							is_backtracking = true;
+							continue;
+						}
+
+						tracking.push((position, remainder, step));
+					} else {
+						break;
 					}
-					Ok(None) => break,
-					Err(_) => {
-						is_backtracking = true;
-					}
-				},
+				}
 			}
 		}
 		Ok(())
