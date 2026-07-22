@@ -21,6 +21,7 @@ impl Plugin for PlayerPlugin {
 	fn build(&self, app: &mut App) {
 		app.add_systems(Update, movement_player.run_if(in_state(GameState::InGame)).run_if(in_state(ActiveMenu::None)));
 		app.add_systems(Update, camera_player.run_if(in_state(GameState::InGame)).run_if(in_state(ActiveMenu::None)));
+		app.add_systems(Update, sync_position.run_if(in_state(GameState::InGame)));
 		app.add_observer(on_network_message);
 		app.add_observer(config_local_player);
 		app.add_observer(config_player);
@@ -95,6 +96,14 @@ fn movement_player(query: Single<(&PlayerSpeed, &mut LinearVelocity), With<Local
 		velocity.x = 0.0;
 		velocity.z = 0.0;
 	}
+}
+
+fn sync_position(player: Single<&Transform, With<LocalPlayer>>, mut commands: Commands) {
+	let player = player.into_inner();
+	commands.trigger(networking::BroadcastMessage {
+		send_flags: steam::SendFlags::UNRELIABLE_NO_NAGLE,
+		data: networking::Message::PlayerPosition(player.translation),
+	});
 }
 
 fn camera_player(accumulated_mouse_motion: Res<input::mouse::AccumulatedMouseMotion>, camera: Single<&mut Transform, With<Camera3d>>) {
