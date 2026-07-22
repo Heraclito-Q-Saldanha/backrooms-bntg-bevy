@@ -138,9 +138,9 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>, steam: Res<stea
 	for member_id in member_ids {
 		let transform = Transform::from_xyz((position.x * 2) as f32, 2f32, (position.y * 2) as f32);
 		if my_id == member_id {
-			commands.spawn((player::Player(member_id), player::LocalPlayer, transform));
+			commands.spawn((DespawnOnExit(GameState::InGame), player::Player(member_id), player::LocalPlayer, transform));
 		} else {
-			commands.spawn((player::Player(member_id), transform));
+			commands.spawn((DespawnOnExit(GameState::InGame), player::Player(member_id), transform));
 		}
 	}
 
