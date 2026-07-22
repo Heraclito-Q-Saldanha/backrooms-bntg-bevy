@@ -123,6 +123,11 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>, steam: Res<stea
 				DespawnOnExit(GameState::InGame),
 				WorldAssetRoot(asset_server.load(GltfAssetLabel::Scene(id).from_asset("models/level_0.glb"))),
 				Transform::from_xyz(x as f32 * 2.0, 0f32, y as f32 * 2.0),
+				camera::visibility::VisibilityRange {
+					start_margin: 0.0..0.0,
+					end_margin: 70.0..75.0,
+					use_aabb: false,
+				},
 				tile,
 			));
 		}
