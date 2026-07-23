@@ -1,4 +1,6 @@
 pub mod map;
+#[cfg(feature = "pathfinding")]
+pub mod pathfinding;
 pub mod probability;
 
 pub use bevy_math::*;
