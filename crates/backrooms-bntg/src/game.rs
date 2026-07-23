@@ -4,7 +4,8 @@ use bevy::camera;
 use bevy::math;
 use bevy::prelude::*;
 
-const MAX_SHADOW_LIGHTS: usize = 22;
+const ENABLE_LIGHTS: bool = true;
+const MAX_SHADOW_LIGHTS: usize = 28;
 const LIGHT_INTENSITY: f32 = 750000.0;
 const LIGHT_RANGE: f32 = 8.0;
 
@@ -45,7 +46,7 @@ fn update_light_shadows(player: Single<&GlobalTransform, With<player::LocalPlaye
 	lights.sort_by(|a, b| a.0.total_cmp(&b.0));
 
 	for (i, (_, mut light)) in lights.into_iter().enumerate() {
-		light.shadow_maps_enabled = i < MAX_SHADOW_LIGHTS;
+		light.shadow_maps_enabled = i < MAX_SHADOW_LIGHTS && ENABLE_LIGHTS;
 	}
 }
 
@@ -59,9 +60,16 @@ fn spawn_lights(event: On<Add, SpawnLight>, transforms: Query<&Transform>, mut c
 			inner_angle: 1.2f32,
 			outer_angle: 1.50f32,
 			contact_shadows_enabled: false,
-			shadow_maps_enabled: false,
+			shadow_maps_enabled: true,
 			..Default::default()
 		},
+		light::CascadeShadowConfigBuilder {
+			num_cascades: 1,
+			maximum_distance: 20.0,
+			overlap_proportion: 0.1,
+			..default()
+		}
+		.build(),
 		Transform {
 			translation: transform.translation,
 			scale: transform.scale,
@@ -69,7 +77,7 @@ fn spawn_lights(event: On<Add, SpawnLight>, transforms: Query<&Transform>, mut c
 		},
 		camera::visibility::VisibilityRange {
 			start_margin: 0.0..0.0,
-			end_margin: 40.0..45.0,
+			end_margin: 30.0..30.0,
 			use_aabb: false,
 		},
 	));
@@ -125,7 +133,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>, steam: Res<stea
 				Transform::from_xyz(x as f32 * 2.0, 0f32, y as f32 * 2.0),
 				camera::visibility::VisibilityRange {
 					start_margin: 0.0..0.0,
-					end_margin: 70.0..75.0,
+					end_margin: 50.0..50.0,
 					use_aabb: false,
 				},
 				tile,
