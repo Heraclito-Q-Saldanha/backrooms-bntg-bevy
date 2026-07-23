@@ -6,6 +6,7 @@ use bevy::prelude::*;
 
 const ENABLE_LIGHTS: bool = true;
 const MAX_SHADOW_LIGHTS: usize = 28;
+const LIGHT_COLOR: Color = Color::srgb(0.82, 0.79, 0.58);
 const LIGHT_INTENSITY: f32 = 750000.0;
 const LIGHT_RANGE: f32 = 8.0;
 
@@ -55,6 +56,7 @@ fn spawn_lights(event: On<Add, SpawnLight>, transforms: Query<&Transform>, mut c
 
 	commands.entity(event.entity).insert((
 		SpotLight {
+			color: LIGHT_COLOR,
 			intensity: LIGHT_INTENSITY,
 			range: LIGHT_RANGE,
 			inner_angle: 1.2f32,
