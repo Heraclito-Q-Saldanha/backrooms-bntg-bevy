@@ -77,11 +77,6 @@ fn spawn_lights(event: On<Add, SpawnLight>, transforms: Query<&Transform>, mut c
 			scale: transform.scale,
 			rotation: Quat::from_rotation_x(-std::f32::consts::FRAC_PI_2),
 		},
-		camera::visibility::VisibilityRange {
-			start_margin: 0.0..0.0,
-			end_margin: 30.0..30.0,
-			use_aabb: false,
-		},
 	));
 }
 
