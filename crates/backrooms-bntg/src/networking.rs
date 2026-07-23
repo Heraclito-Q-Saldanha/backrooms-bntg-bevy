@@ -8,7 +8,7 @@ pub struct NetworkingPlugin;
 pub enum Message {
 	StartGame,
 	PlayerPosition(Vec3),
-	MapGenerated(wfc::map::Map2D<game::Tile>),
+	MapGenerated(wfc::map::Map2D<level_0::Tile>),
 }
 
 #[derive(Debug, Clone, Event)]

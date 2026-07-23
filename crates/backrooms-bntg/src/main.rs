@@ -1,5 +1,5 @@
 pub mod create_lobby;
-pub mod game;
+pub mod level_0;
 pub mod main_menu;
 pub mod networking;
 pub mod pause;
@@ -60,7 +60,7 @@ fn main() {
 	app.add_plugins(search_lobby::SearchLobbyPlugin);
 	app.add_plugins(create_lobby::CreateLobbyPlugin);
 	app.add_plugins(waiting_players::WaitingPlayersPlugin);
-	app.add_plugins(game::GamePlugin);
+	app.add_plugins(level_0::GamePlugin);
 	app.add_plugins(pause::PauseMenuPlugin);
 	app.add_plugins(player::PlayerPlugin);
 	app.add_plugins(player_menu::PlayerMenuPlugin);
