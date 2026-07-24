@@ -65,6 +65,7 @@ fn config_local_player(event: On<Add, LocalPlayer>, mut commands: Commands) {
 				radius: 1.0,
 				..Default::default()
 			},
+			SpatialListener::new(0.25),
 		)],
 		#[cfg(feature = "inspector")]
 		{

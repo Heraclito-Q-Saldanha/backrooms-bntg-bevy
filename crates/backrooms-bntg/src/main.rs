@@ -10,6 +10,7 @@ pub mod steam;
 pub mod ui;
 pub mod waiting_players;
 
+use bevy::audio;
 use bevy::light;
 use bevy::prelude::*;
 use bevy::window;
@@ -54,6 +55,10 @@ fn main() {
 					..default()
 				}),
 				..default()
+			})
+			.set(audio::AudioPlugin {
+				default_spatial_scale: audio::SpatialScale::new(0.75),
+				..Default::default()
 			}),
 	);
 	app.add_plugins(main_menu::MainMenuPlugin);

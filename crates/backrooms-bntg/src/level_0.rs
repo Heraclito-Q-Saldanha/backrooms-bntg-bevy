@@ -1,5 +1,6 @@
 use crate::*;
 
+use bevy::audio;
 use bevy::camera;
 use bevy::math;
 use bevy::prelude::*;
@@ -9,6 +10,10 @@ const MAX_SHADOW_LIGHTS: usize = 28;
 const LIGHT_COLOR: Color = Color::srgb(0.82, 0.79, 0.58);
 const LIGHT_INTENSITY: f32 = 750000.0;
 const LIGHT_RANGE: f32 = 8.0;
+const AUDIO_DISTANCE: f32 = 24.0;
+
+const TILE_MODEL_ASSET: &'static str = "models/level_0.glb";
+const LAMP_AUDIO_ASSET: &'static str = "audio/fluorescent_lamp.ogg";
 
 pub struct GamePlugin;
 
@@ -33,6 +38,7 @@ impl Plugin for GamePlugin {
 	fn build(&self, app: &mut App) {
 		app.add_systems(OnEnter(GameState::InGame), setup);
 		app.add_systems(Update, update_light_shadows.run_if(in_state(GameState::InGame)));
+		app.add_systems(Update, spawn_audio.run_if(in_state(GameState::InGame)));
 		app.add_observer(despawn_players.run_if(in_state(GameState::InGame)));
 		app.add_observer(on_network_message.run_if(in_state(GameState::InGame)));
 		app.add_observer(spawn_lights.run_if(in_state(GameState::InGame)));
@@ -43,7 +49,6 @@ fn update_light_shadows(player: Single<&GlobalTransform, With<player::LocalPlaye
 	let position = player.translation();
 
 	let mut lights: Vec<_> = lights.into_iter().map(|(transform, light)| (transform.translation().distance_squared(position), light)).collect();
-
 	lights.sort_by(|a, b| a.0.total_cmp(&b.0));
 
 	for (i, (_, mut light)) in lights.into_iter().enumerate() {
@@ -78,6 +83,32 @@ fn spawn_lights(event: On<Add, SpawnLight>, transforms: Query<&Transform>, mut c
 			rotation: Quat::from_rotation_x(-std::f32::consts::FRAC_PI_2),
 		},
 	));
+}
+
+fn spawn_audio(
+	player: Single<&GlobalTransform, With<player::LocalPlayer>>,
+	with_audio: Query<(Entity, &GlobalTransform), (With<SpotLight>, With<AudioPlayer>)>,
+	without_audio: Query<(Entity, &GlobalTransform), (With<SpotLight>, Without<AudioPlayer>)>,
+	asset_server: Res<AssetServer>,
+	mut commands: Commands,
+) {
+	let player_pos = player.translation();
+	let max_dist_sq = AUDIO_DISTANCE * AUDIO_DISTANCE;
+
+	for (entity, transform) in &with_audio {
+		if transform.translation().distance_squared(player_pos) > max_dist_sq {
+			commands.entity(entity).remove::<AudioPlayer>();
+			commands.entity(entity).remove::<PlaybackSettings>();
+		}
+	}
+
+	let audio = asset_server.load(LAMP_AUDIO_ASSET);
+
+	for (entity, transform) in &without_audio {
+		if transform.translation().distance_squared(player_pos) <= max_dist_sq {
+			commands.entity(entity).insert((AudioPlayer::new(audio.clone()), PlaybackSettings::LOOP.with_spatial(true).with_volume(audio::Volume::Linear(2.5))));
+		}
+	}
 }
 
 fn despawn_players(event: On<steam::LobbyChatUpdate>, players: Query<(Entity, &player::Player)>, mut commands: Commands) {
@@ -126,7 +157,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>, steam: Res<stea
 
 			commands.spawn((
 				DespawnOnExit(GameState::InGame),
-				WorldAssetRoot(asset_server.load(GltfAssetLabel::Scene(id).from_asset("models/level_0.glb"))),
+				WorldAssetRoot(asset_server.load(GltfAssetLabel::Scene(id).from_asset(TILE_MODEL_ASSET))),
 				Transform::from_xyz(x as f32 * 2.0, 0f32, y as f32 * 2.0),
 				camera::visibility::VisibilityRange {
 					start_margin: 0.0..0.0,
